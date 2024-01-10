@@ -10,7 +10,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [donate]: https://brettterpstra.com/donate
 
 
-The current version of `curlyq` is 0.0.2
+The current version of `curlyq` is 0.0.3
 .
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
@@ -141,6 +141,7 @@ SYNOPSIS
 COMMAND OPTIONS
     -c, --[no-]compressed - Expect compressed results
     --[no-]clean          - Remove extra whitespace from results
+    -h, --header=arg      - Define a header to send as key=value (may be used more than once, default: none)
     -t, --type=arg        - Type of images to return (img, srcset, opengraph, all) (may be used more than once, default: ["all"])
 ```
 
@@ -211,6 +212,7 @@ SYNOPSIS
 
 COMMAND OPTIONS
     -b, --browser=arg     - Browser to use (firefox, chrome) (default: chrome)
+    -h, --header=arg      - Define a header to send as key=value (may be used more than once, default: none)
     -o, --out, --file=arg - File destination (default: none)
     -t, --type=arg        - Type of screenshot to save (full (requires firefox), print, visible) (default: full)
 ```
