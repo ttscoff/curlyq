@@ -8,7 +8,7 @@
 _If you find this useful, feel free to [buy me some coffee][donate]._
 
 
-The current version of `curlyq` is 0.0.1
+The current version of `curlyq` is 0.0.2
 .
 
 `curlyq` is a command that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
@@ -55,7 +55,7 @@ COMMANDS
     json       - Get a JSON response from a URL, multiple URLs allowed
     links      - Return all links on a URL's page
     scrape     - Scrape a page using a web browser, for dynamic (JS) pages. Be sure to have the selected --browser installed.
-    screenshot - Save a screenshot of the URL
+    screenshot - Save a screenshot of a URL
     tags       - Extract all instances of a tag
 ```
 
@@ -195,7 +195,7 @@ COMMAND OPTIONS
 
 ```
 NAME
-    screenshot - Save a screenshot of the URL
+    screenshot - Save a screenshot of a URL
 
 SYNOPSIS
 
