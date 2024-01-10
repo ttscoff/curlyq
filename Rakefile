@@ -8,7 +8,7 @@ Rake::RDocTask.new do |rd|
   rd.title = 'Your application title'
 end
 
-spec = eval(File.read('curly.gemspec'))
+spec = eval(File.read('curlyq.gemspec'))
 
 Gem::PackageTask.new(spec) do |pkg|
 end

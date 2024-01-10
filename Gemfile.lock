@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    curly (0.0.1)
+    curlyq (0.0.1)
       gli (~> 2.21.0)
       nokogiri (~> 1.16.0)
       selenium-webdriver (~> 4.16.0)
@@ -30,7 +30,7 @@ PLATFORMS
   arm64-darwin-20
 
 DEPENDENCIES
-  curly!
+  curlyq!
   minitest (~> 5.14)
   rake (~> 0.9.2)
   rdoc (~> 4.3)

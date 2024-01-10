@@ -1,0 +1,355 @@
+== curlyq - A scriptable interface to curl
+
+v0.0.1
+
+=== Global Options
+=== --help
+Show this message
+
+
+
+=== --[no-]pretty
+Output "pretty" JSON
+
+
+
+=== --version
+Display the program version
+
+
+
+=== -y|--[no-]yaml
+Output YAML instead of json
+
+
+
+=== Commands
+==== Command: <tt>extract  URL...</tt>
+Extract contents between two regular expressions
+
+
+===== Options
+===== -a|--after arg
+
+Text after extraction, parsed as regex
+
+[Default Value] None
+
+
+===== -b|--before arg
+
+Text before extraction, parsed as regex
+
+[Default Value] None
+
+
+===== -h|--header arg
+
+Define a header to send as key=value
+
+[Default Value] None
+
+
+===== -c|--[no-]compressed
+Expect compressed results
+
+
+
+===== --[no-]clean
+Remove extra whitespace from results
+
+
+
+===== --[no-]strip
+Strip HTML tags from results
+
+
+
+==== Command: <tt>headlinks  URL...</tt>
+Return all <head> links on URL's page
+
+
+===== Options
+===== -q|--query|--filter arg
+
+Filter output using dot-syntax path
+
+[Default Value] None
+
+
+==== Command: <tt>help  command</tt>
+Shows a list of commands or help for one command
+
+Gets help for the application or its commands. Can also list the commands in a way helpful to creating a bash-style completion function
+===== Options
+===== -c
+List commands one per line, to assist with shell completion
+
+
+
+==== Command: <tt>html|curl  URL...</tt>
+Curl URL and output its elements, multiple URLs allowed
+
+
+===== Options
+===== -b|--browser arg
+
+Use a browser to retrieve a dynamic web page (firefox, chrome)
+
+[Default Value] None
+[Must Match] (?-mix:^[fc].*?$)
+
+
+===== -f|--fallback arg
+
+If curl doesn't work, use a fallback browser (firefox, chrome)
+
+[Default Value] None
+[Must Match] (?-mix:^[fc].*?$)
+
+
+===== -h|--header arg
+
+Define a header to send as "key=value"
+
+[Default Value] None
+
+
+===== -q|--query|--filter arg
+
+Filter output using dot-syntax path
+
+[Default Value] None
+
+
+===== -r|--raw arg
+
+Output a raw value for a key
+
+[Default Value] None
+
+
+===== --search arg
+
+Regurn an array of matches to a CSS or XPath query
+
+[Default Value] None
+
+
+===== -I|--info
+Only retrieve headers/info
+
+
+
+===== -c|--compressed
+Expect compressed results
+
+
+
+===== --[no-]clean
+Remove extra whitespace from results
+
+
+
+===== --[no-]ignore_fragments
+Ignore fragment hrefs when gathering content links
+
+
+
+===== --[no-]ignore_relative
+Ignore relative hrefs when gathering content links
+
+
+
+===== -x|--external_links_only
+Only gather external links
+
+
+
+==== Command: <tt>images  URL...</tt>
+Extract all images from a URL
+
+
+===== Options
+===== -t|--type arg
+
+Type of images to return (img, srcset, opengraph, all)
+
+[Default Value] ["all"]
+
+
+===== -c|--[no-]compressed
+Expect compressed results
+
+
+
+===== --[no-]clean
+Remove extra whitespace from results
+
+
+
+==== Command: <tt>json  URL...</tt>
+Get a JSON response from a URL, multiple URLs allowed
+
+
+===== Options
+===== -h|--header arg
+
+Define a header to send as key=value
+
+[Default Value] None
+
+
+===== -q|--query|--filter arg
+
+Filter output using dot-syntax path
+
+[Default Value] None
+
+
+===== -c|--[no-]compressed
+Expect compressed results
+
+
+
+==== Command: <tt>links  URL...</tt>
+Return all links on a URL's page
+
+
+===== Options
+===== -q|--query|--filter arg
+
+Filter output using dot-syntax path
+
+[Default Value] None
+
+
+===== -d|--[no-]dedup
+Filter out duplicate links, preserving only first one
+
+
+
+===== --[no-]ignore_fragments
+Ignore fragment hrefs when gathering content links
+
+
+
+===== --[no-]ignore_relative
+Ignore relative hrefs when gathering content links
+
+
+
+===== -x|--external_links_only
+Only gather external links
+
+
+
+==== Command: <tt>scrape  URL...</tt>
+Scrape a page using a web browser, for dynamic (JS) pages. Be sure to have the selected --browser installed.
+
+
+===== Options
+===== -b|--browser arg
+
+Browser to use (firefox, chrome)
+
+[Default Value] None
+
+
+===== -h|--header arg
+
+Define a header to send as "key=value"
+
+[Default Value] None
+
+
+===== -q|--query|--filter arg
+
+Filter output using dot-syntax path
+
+[Default Value] None
+
+
+===== -r|--raw arg
+
+Output a raw value for a key
+
+[Default Value] None
+
+
+===== --search arg
+
+Regurn an array of matches to a CSS or XPath query
+
+[Default Value] None
+
+
+===== --[no-]clean
+Remove extra whitespace from results
+
+
+
+==== Command: <tt>screenshot  URL...</tt>
+Save a screenshot of the URL
+
+
+===== Options
+===== -b|--browser arg
+
+Browser to use (firefox, chrome)
+
+[Default Value] chrome
+[Must Match] (?-mix:^[fc].*?$)
+
+
+===== -o|--out|--file arg
+
+File destination
+
+[Default Value] None
+
+
+===== -t|--type arg
+
+Type of screenshot to save (full (requires firefox), print, visible)
+
+[Default Value] full
+[Must Match] (?-mix:^[fpv].*?$)
+
+
+==== Command: <tt>tags  URL...</tt>
+Extract all instances of a tag
+
+
+===== Options
+===== -h|--header arg
+
+Define a header to send as key=value
+
+[Default Value] None
+
+
+===== -q|--query|--search arg
+
+CSS/XPath query
+
+[Default Value] None
+
+
+===== -t|--tag arg
+
+Specify a tag to collect
+
+[Default Value] None
+
+
+===== -c|--[no-]compressed
+Expect compressed results
+
+
+
+===== --[no-]clean
+Remove extra whitespace from results
+
+
+

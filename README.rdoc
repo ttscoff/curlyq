@@ -1,6 +1,6 @@
 = curly
 
-Describe your project here
+A CLI helper for curl and web scraping
 
-:include:curly.rdoc
+:include:curlyq.rdoc
 
