@@ -7,7 +7,7 @@
 ##
 class ::String
   def clean
-    gsub(/[\n ]+/m, ' ').gsub(/> +</, '><')
+    gsub(/[\t\n ]+/m, ' ').gsub(/> +</, '><')
   end
 
   ##

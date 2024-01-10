@@ -3,7 +3,11 @@
 module Curl
   # Class for CURLing a JSON response
   class Json
-    attr_reader :url, :code, :json, :headers
+    attr_accessor :url
+
+    attr_writer :compressed, :request_headers, :symbolize_names
+
+    attr_reader :code, :json, :headers
 
     def to_data
       {
@@ -23,9 +27,17 @@ module Curl
     ##
     ## @return     [Curl::Json] Curl::Json object with url, code, parsed json, and response headers
     ##
-    def initialize(url, headers: nil, compressed: false, symbolize_names: false)
+    def initialize(url, options = {})
+      @url = url
+      @request_headers = options[:headers]
+      @compressed = options[:compressed]
+      @symbolize_names = options[:symbolize_names]
+
       @curl = TTY::Which.which('curl')
-      page = curl_json(url, headers: headers, compressed: compressed, symbolize_names: symbolize_names)
+    end
+
+    def curl
+      page = curl_json
 
       raise "Error retrieving #{url}" if page.nil? || page.empty?
 
@@ -60,7 +72,7 @@ module Curl
     ##
     ## @return     [Hash] hash of url, code, headers, and parsed json
     ##
-    def curl_json(url, headers: nil, compressed: false, symbolize_names: false)
+    def curl_json
       flags = 'SsLi'
       agents = [
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.1',
@@ -69,12 +81,12 @@ module Curl
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.'
       ]
 
-      headers = headers.nil? ? '' : headers.map { |h, v| %(-H "#{h}: #{v}") }.join(' ')
-      compress = compressed ? '--compressed' : ''
-      source = `#{@curl} -#{flags} #{compress} #{headers} '#{url}' 2>/dev/null`
+      headers = @headers.nil? ? '' : @headers.map { |h, v| %(-H "#{h}: #{v}") }.join(' ')
+      compress = @compressed ? '--compressed' : ''
+      source = `#{@curl} -#{flags} #{compress} #{headers} '#{@url}' 2>/dev/null`
       agent = 0
       while source.nil? || source.empty?
-        source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{url}' 2>/dev/null`
+        source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{@url}' 2>/dev/null`
         break if agent >= agents.count - 1
       end
 
@@ -99,9 +111,9 @@ module Curl
       json = source.strip.force_encoding('utf-8')
       begin
         json.gsub!(/[\u{1F600}-\u{1F6FF}]/, '')
-        { url: url, code: code, headers: headers, json: JSON.parse(json, symbolize_names: symbolize_names) }
-      rescue StandardError => e
-        { url: url, code: code, headers: headers, json: nil}
+        { url: @url, code: code, headers: headers, json: JSON.parse(json, symbolize_names: @symbolize_names) }
+      rescue StandardError
+        { url: @url, code: code, headers: headers, json: nil }
       end
     end
   end

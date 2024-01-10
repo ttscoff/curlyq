@@ -10,8 +10,11 @@ module Curl
 
   # Class for CURLing an HTML page
   class Html
-    attr_reader :url, :code, :headers, :meta, :links, :head, :body,
-                :source, :title, :description, :body_links, :body_images, :clean
+    attr_accessor :settings, :browser, :source, :headers, :headers_only, :compressed, :clean, :fallback,
+                  :ignore_local_links, :ignore_fragment_links, :external_links_only
+
+    attr_reader :url, :code, :meta, :links, :head, :body,
+                :title, :description, :body_links, :body_images
 
     def to_data(url: nil)
       {
@@ -20,9 +23,9 @@ module Curl
         headers: @headers,
         meta: @meta,
         meta_links: @links,
-        head: @head,
-        body: @body,
-        source: @source,
+        head: @clean ? @head&.strip&.clean : @head,
+        body: @clean ? @body&.strip&.clean : @body,
+        source: @clean ? @source&.strip&.clean : @source,
         title: @title,
         description: @description,
         links: @body_links,
@@ -33,29 +36,48 @@ module Curl
     ##
     ## Create a new page object from a URL
     ##
-    ## @param      url           [String] The url
-    ## @param      headers       [Hash] The headers to use in the curl call
-    ## @param      headers_only  [Boolean] Return headers only
-    ## @param      compressed    [Boolean] Expect compressed result
+    ## @param      url      [String] The url
+    ## @param      options  [Hash] The options
+    ##
+    ## @option options :browser [Symbol] the browser to use instead of curl (:chrome, :firefox)
+    ## @option options :source [String] source provided instead of curl
+    ## @option options :headers [Hash] headers to send in the request
+    ## @option options :headers_only [Boolean] whether to return just response headers
+    ## @option options :compressed [Boolean] expect compressed response
+    ## @option options :clean [Boolean] clean whitespace from response
+    ## @option options :fallback [Symbol] browser to fall back to if curl doesn't work (:chrome, :firefox)
+    ## @option options :ignore_local_links [Boolean] when collecting links, ignore local/relative links
+    ## @option options :ignore_fragment_links [Boolean] when collecting links, ignore links that are just #fragments
+    ## @option options :external_links_only [Boolean] only collect links outside of current site
     ##
     ## @return     [HTMLCurl] new page object
     ##
-    def initialize(url, browser: nil, source: nil, headers: nil,
-                   headers_only: false, compressed: false, clean: false, fallback: false,
-                   ignore_local_links: false, ignore_fragment_links: false, external_links_only: false)
-      @clean = clean
-      @ignore_local_links = ignore_local_links
-      @ignore_fragment_links = ignore_fragment_links
-      @external_links_only = external_links_only
+    def initialize(url, options = {})
+      @browser = options[:browser] || :none
+      @source = options[:source]
+      @headers = options[:headers] || {}
+      @headers_only = options[:headers_only]
+      @compressed = options[:compressed]
+      @clean = options[:clean]
+      @fallback = options[:fallback]
+      @ignore_local_links = options[:ignore_local_links]
+      @ignore_fragment_links = options[:ignore_fragment_links]
+      @external_links_only = options[:external_links_only]
+
       @curl = TTY::Which.which('curl')
       @url = url
-      res = if url && browser && browser != :none
-              source = curl_dynamic_html(url, browser, headers)
-              curl_html(nil, source: source, headers: headers)
+    end
+
+    def curl
+      res = if @url && @browser && @browser != :none
+              source = curl_dynamic_html(@url, @browser, @headers)
+              curl_html(nil, source: source, headers: @headers)
             elsif url.nil? && !source.nil?
-              curl_html(nil, source: source, headers: headers, headers_only: headers_only, compressed: compressed, fallback: false)
+              curl_html(nil, source: @source, headers: @headers, headers_only: @headers_only,
+                             compressed: @compressed, fallback: false)
             else
-              curl_html(url, headers: headers, headers_only: headers_only, compressed: compressed, fallback: fallback)
+              curl_html(@url, headers: @headers, headers_only: @headers_only,
+                              compressed: @compressed, fallback: @fallback)
             end
       @url = res[:url]
       @code = res[:code]
@@ -82,10 +104,10 @@ module Curl
     ##                          save (:full_page,
     ##                          :print_page, :visible)
     ##
-    def screenshot(destination = nil, browser: :chrome, type: :full_page)
+    def screenshot(destination = nil, type: :full_page)
       full_page = type.to_sym == :full_page
       print_page = type.to_sym == :print_page
-      save_screenshot(destination, browser: browser, type: type)
+      save_screenshot(destination, type: type)
     end
 
     ##
@@ -297,7 +319,7 @@ module Curl
 
       {
         tag: el.name,
-        source: el.to_html,
+        source: @clean ? el.to_html&.strip&.clean : el.to_html,
         attrs: attributes,
         content: @clean ? el.text&.strip&.clean : el.text.strip,
         tags: recurse_children(el)
@@ -534,7 +556,7 @@ module Curl
     ## @param      browser      [Symbol] The browser (:chrome or :firefox)
     ## @param      type         [Symbol] The type of screenshot (:full_page, :print_page, or :visible)
     ##
-    def save_screenshot(destination = nil, browser: :chrome, type: :full_page)
+    def save_screenshot(destination = nil, type: :full_page)
       raise 'No URL provided' if url.nil?
 
       raise 'No file destination provided' if destination.nil?
@@ -554,7 +576,7 @@ module Curl
                       "#{destination.sub(/\.(pdf|jpe?g|png)$/, '')}.png"
                     end
 
-      driver = Selenium::WebDriver.for browser
+      driver = Selenium::WebDriver.for @browser
       driver.manage.timeouts.implicit_wait = 4
       begin
         driver.get @url

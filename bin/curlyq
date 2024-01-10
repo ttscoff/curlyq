@@ -110,12 +110,13 @@ command %i[html curl] do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Html.new(url, browser: options[:browser], fallback: options[:fallback],
-                                headers: headers, headers_only: options[:info],
-                                compressed: options[:compressed], clean: options[:clean],
-                                ignore_local_links: options[:ignore_relative],
-                                ignore_fragment_links: options[:ignore_fragments],
-                                external_links_only: options[:external_links_only])
+      res = Curl::Html.new(url, { browser: options[:browser], fallback: options[:fallback],
+                                  headers: headers, headers_only: options[:info],
+                                  compressed: options[:compressed], clean: options[:clean],
+                                  ignore_local_links: options[:ignore_relative],
+                                  ignore_fragment_links: options[:ignore_fragments],
+                                  external_links_only: options[:external_links_only] })
+      res.curl
 
       if options[:info]
         output.push(res.headers)
@@ -156,12 +157,18 @@ command :screenshot do |c|
   c.desc 'File destination'
   c.flag %i[o out file]
 
+  c.desc 'Define a header to send as key=value'
+  c.flag %i[h header], multiple: true
+
   c.action do |_, options, args|
     urls = args.join(' ').split(/[, ]+/)
+    headers = break_headers(options[:header])
 
     urls.each do |url|
       c = Curl::Html.new(url)
-      c.screenshot(options[:out], browser: options[:browser], type: options[:type])
+      c.headers = headers
+      c.browser = options[:browser]
+      c.screenshot(options[:out], type: options[:type])
     end
   end
 end
@@ -185,7 +192,11 @@ command :json do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Json.new(url, headers: headers, compressed: options[:compressed], symbolize_names: false)
+      res = Curl::Json.new(url)
+      res.request_headers = headers
+      res.compressed = options[:compressed],
+      res.symbolize_names = false
+      res.curl
 
       json = res.json
 
@@ -235,8 +246,9 @@ command :extract do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Html.new(url, headers: headers, headers_only: false,
-                                compressed: options[:compressed], clean: options[:clean])
+      res = Curl::Html.new(url, { headers: headers, headers_only: false,
+                                  compressed: options[:compressed], clean: options[:clean] })
+      res.curl
       extracted = res.extract(options[:before], options[:after])
       extracted.strip_tags! if options[:strip]
       output.concat(extracted)
@@ -271,8 +283,9 @@ command :tags do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Html.new(url, headers: headers, headers_only: options[:headers],
-                                compressed: options[:compressed], clean: options[:clean])
+      res = Curl::Html.new(url, { headers: headers, headers_only: options[:headers],
+                                  compressed: options[:compressed], clean: options[:clean] })
+      res.curl
       output = []
       if options[:search]
         output = res.tags.search(options[:search])
@@ -299,15 +312,20 @@ command :images do |c|
   c.desc 'Remove extra whitespace from results'
   c.switch %i[clean]
 
+  c.desc 'Define a header to send as key=value'
+  c.flag %i[h header], multiple: true
+
   c.action do |global_options, options, args|
     urls = args.join(' ').split(/[, ]+/)
+    headers = break_headers(options[:header])
 
     output = []
 
     types = options[:type].join(' ').split(/[ ,]+/).map(&:normalize_image_type)
 
     urls.each do |url|
-      res = Curl::Html.new(url, compressed: options[:compressed], clean: options[:clean])
+      res = Curl::Html.new(url, { compressed: options[:compressed], clean: options[:clean] })
+      res.curl
       output.concat(res.images(types: types))
     end
 
@@ -339,10 +357,13 @@ command :links do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Html.new(url, compressed: options[:compressed], clean: options[:clean],
-                                ignore_local_links: options[:ignore_relative],
-                                ignore_fragment_links: options[:ignore_fragments],
-                                external_links_only: options[:external_links_only])
+      res = Curl::Html.new(url, {
+                             compressed: options[:compressed], clean: options[:clean],
+                             ignore_local_links: options[:ignore_relative],
+                             ignore_fragment_links: options[:ignore_fragments],
+                             external_links_only: options[:external_links_only]
+                           })
+      res.curl
 
       if options[:query]
         query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
@@ -371,7 +392,8 @@ command :headlinks do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Html.new(url, compressed: options[:compressed], clean: options[:clean])
+      res = Curl::Html.new(url, { compressed: options[:compressed], clean: options[:clean] })
+      res.curl
 
       if options[:query]
         query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
@@ -420,7 +442,8 @@ command :scrape do |c|
         driver.get url
         res = driver.page_source
 
-        res = Curl::Html.new(nil, source: res, clean: options[:clean])
+        res = Curl::Html.new(nil, { source: res, clean: options[:clean] })
+        res.curl
         if options[:search]
           out = res.search(options[:search])
 
