@@ -70,7 +70,7 @@ module Curl
 
     def curl
       res = if @url && @browser && @browser != :none
-              source = curl_dynamic_html(@url, @browser, @headers)
+              source = curl_dynamic_html
               curl_html(nil, source: source, headers: @headers)
             elsif url.nil? && !source.nil?
               curl_html(nil, source: @source, headers: @headers, headers_only: @headers_only,
@@ -533,14 +533,14 @@ module Curl
     ##
     ## @return [String] page source
     ##
-    def curl_dynamic_html(url, browser, headers)
-      browser = browser.normalize_browser_type if browser.is_a?(String)
+    def curl_dynamic_html
+      browser = @browser.normalize_browser_type if @browser.is_a?(String)
       res = nil
 
       driver = Selenium::WebDriver.for browser
       driver.manage.timeouts.implicit_wait = 4
       begin
-        driver.get url
+        driver.get @url
         res = driver.page_source
       ensure
         driver.quit
@@ -609,38 +609,38 @@ module Curl
                   headers_only: false, compressed: false, fallback: false)
       unless url.nil?
         flags = 'SsL'
-        flags += headers_only ? 'I' : 'i'
+        flags += @headers_only ? 'I' : 'i'
         agents = [
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.1',
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.',
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3',
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.'
         ]
-        headers = headers.nil? ? '' : headers.map { |h, v| %(-H "#{h}: #{v}") }.join(' ')
-        compress = compressed ? '--compressed' : ''
-        source = `#{@curl} -#{flags} #{compress} #{headers} '#{url}' 2>/dev/null`
+        headers = @headers.nil? ? '' : @headers.map { |h, v| %(-H "#{h}: #{v}") }.join(' ')
+        compress = @compressed ? '--compressed' : ''
+        @source = `#{@curl} -#{flags} #{compress} #{headers} '#{@url}' 2>/dev/null`
         agent = 0
         while source.nil? || source.empty?
-          source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{url}' 2>/dev/null`
+          source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{@url}' 2>/dev/null`
           break if agent >= agents.count - 1
         end
 
-        unless $?.success? || fallback
-          warn "Error curling #{url}"
+        unless $?.success? || @fallback
+          warn "Error curling #{@url}"
           Process.exit 1
         end
 
-        if fallback && (source.nil? || source.empty?)
-          source = curl_dynamic_html(url, fallback, headers)
+        if @fallback && (@source.nil? || @source.empty?)
+          @source = curl_dynamic_html(@url, @fallback, @headers)
         end
       end
 
       return false if source.nil? || source.empty?
 
-      source.strip!
+      @source.strip!
 
-      headers = { 'location' => url }
-      lines = source.split(/\r\n/)
+      headers = { 'location' => @url }
+      lines = @source.split(/\r\n/)
       code = lines[0].match(/(\d\d\d)/)[1]
       lines.shift
       lines.each_with_index do |line, idx|
@@ -648,7 +648,7 @@ module Curl
           m = Regexp.last_match
           headers[m[1]] = m[2]
         else
-          source = lines[idx..].join("\n")
+          @source = lines[idx..].join("\n")
           break
         end
       end
@@ -658,21 +658,21 @@ module Curl
       end
 
       if headers['content-type'] =~ /json/
-        return { url: url, code: code, headers: headers, meta: nil, links: nil,
-                 head: nil, body: source.strip, source: source.strip, body_links: nil, body_images: nil }
+        return { url: @url, code: code, headers: headers, meta: nil, links: nil,
+                 head: nil, body: @source.strip, source: @source.strip, body_links: nil, body_images: nil }
       end
 
       head = source.match(%r{(?<=<head>)(.*?)(?=</head>)}mi)
 
       if head.nil?
-        { url: url, code: code, headers: headers, meta: nil, links: nil, head: nil, body: source.strip,
-          source: source.strip, body_links: nil, body_images: nil }
+        { url: @url, code: code, headers: headers, meta: nil, links: nil, head: nil, body: @source.strip,
+          source: @source.strip, body_links: nil, body_images: nil }
       else
         meta = meta_tags(head[1])
         links = link_tags(head[1])
-        body = source.match(%r{<body.*?>(.*?)</body>}mi)[1]
-        { url: url, code: code, headers: headers, meta: meta, links: links, head: head[1], body: body,
-          source: source.strip, body_links: body_links, body_images: body_images }
+        body = @source.match(%r{<body.*?>(.*?)</body>}mi)[1]
+        { url: @url, code: code, headers: headers, meta: meta, links: links, head: head[1], body: body,
+          source: @source.strip, body_links: body_links, body_images: body_images }
       end
     end
 
