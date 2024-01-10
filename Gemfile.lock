@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    curlyq (0.0.2)
+    curlyq (0.0.3)
       gli (~> 2.21.0)
       nokogiri (~> 1.16.0)
       selenium-webdriver (~> 4.16.0)

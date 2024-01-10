@@ -1,4 +1,4 @@
-<!--README--><!--GITHUB--># curlyq
+<!--README--><!--GITHUB--># CurlyQ
 
 [![Gem](https://img.shields.io/gem/v/na.svg)](https://rubygems.org/gems/curlyq)
 [![GitHub license](https://img.shields.io/github/license/ttscoff/curlyq.svg)](./LICENSE.txt)
@@ -8,9 +8,9 @@
 _If you find this useful, feel free to [buy me some coffee][donate]._
 <!--END GITHUB-->
 
-The current version of `curlyq` is <!--VER--><!--END VER-->.
+The current version of `curlyq` is <!--VER-->0.0.2<!--END VER-->.
 
-`curlyq` is a command that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
+CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
 
 [github]: https://github.com/ttscoff/curlyq/
 
@@ -23,11 +23,15 @@ If you're using Homebrew, you have the option to install via [brew-gem](https://
     brew install brew-gem
     brew gem install curlyq
 
-If you don't have Ruby/RubyGems, you can install them pretty easily with Homebrew, rvm, or asdf.
+If you don't have Ruby/RubyGems, you can install them pretty easily with [Homebrew], [rvm], or [asdf].
+
+[Homebrew]: https://brew.sh/ "Homebrew—The Missing Package Manager for macOS (or Linux)"
+[rvm]: https://rvm.io/ "Ruby Version Manager (RVM)"
+[asdf]: https://github.com/asdf-vm/asdf "asdf-vm/asdf:Extendable version manager with support for ..."
 
 ### Usage
 
-Run `curlyq help` for a list of commands. Run `curlyq help SUBCOMMAND` for details on a particular subcommand and its options.
+Run `curlyq help` for a list of subcommands. Run `curlyq help SUBCOMMAND` for details on a particular subcommand and its options.
 
 ```
 @cli(bundle exec bin/curlyq help)
@@ -35,7 +39,7 @@ Run `curlyq help` for a list of commands. Run `curlyq help SUBCOMMAND` for detai
 
 #### Commands
 
-curlyq makes use of subcommands, e.g. `curlyq html` or `curlyq extract`. Each subcommand takes its own options, but I've made an effort to standardize the choices between each command.
+curlyq makes use of subcommands, e.g. `curlyq html [options] URL` or `curlyq extract [options] URL`. Each subcommand takes its own options, but I've made an effort to standardize the choices between each command as much as possible.
 
 ##### extract
 
@@ -81,6 +85,8 @@ curlyq makes use of subcommands, e.g. `curlyq html` or `curlyq extract`. Each su
 ```
 
 ##### screenshot
+
+Full-page screenshots require Firefox, installed and specified with `--browser firefox`.
 
 ```
 @cli(bundle exec bin/curlyq help screenshot)
