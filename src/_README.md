@@ -105,5 +105,5 @@ PayPal link: [paypal.me/ttscoff](https://paypal.me/ttscoff)
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/ttscoff/na_gem/blob/master/CHANGELOG.md)
+See [CHANGELOG.md](https://github.com/ttscoff/curlyq/blob/main/CHANGELOG.md)
 <!--END GITHUB--><!--END README-->
