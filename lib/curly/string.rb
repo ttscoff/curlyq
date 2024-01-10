@@ -2,7 +2,19 @@
 
 class ::String
   def clean
-    gsub(/[\n ]+/m, ' ')
+    gsub(/[\n ]+/m, ' ').gsub(/> +</, '><')
+  end
+
+  def strip_tags
+    gsub(%r{</?.*?>}, '')
+  end
+
+  def clean!
+    replace clean
+  end
+
+  def strip_tags!
+    replace strip_tags
   end
 
   ##

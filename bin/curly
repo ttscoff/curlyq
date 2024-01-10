@@ -33,7 +33,9 @@ switch %i[y yaml]
 desc 'Output "pretty" JSON'
 switch %i[pretty], default_value: true, negatable: true
 
-# TODO: Post method
+# TODO: Post method, html and json with --data flags, accept key=value and files
+# TODO: Handle binary responses, deal gracefully with compressed data
+# TODO: File uploads?
 
 def self.break_headers(headers)
   out = {}
@@ -86,11 +88,20 @@ command %i[html curl] do |c|
   c.desc 'Remove extra whitespace from results'
   c.switch %i[clean]
 
-  c.desc 'Query path, dot-syntax'
-  c.flag %i[q query]
+  c.desc 'Filter output using dot-syntax path'
+  c.flag %i[q query filter]
 
   c.desc 'Output a raw value for a key'
   c.flag %i[r raw]
+
+  c.desc 'Ignore relative hrefs when gathering content links'
+  c.switch %i[ignore_relative], negatable: true
+
+  c.desc 'Ignore fragment hrefs when gathering content links'
+  c.switch %i[ignore_fragments], negatable: true
+
+  c.desc 'Only gather external links'
+  c.switch %i[x external_links_only], default_value: false, negatable: false
 
   c.action do |global_options, options, args|
     urls = args.join(' ').split(/[, ]+/)
@@ -101,7 +112,11 @@ command %i[html curl] do |c|
     urls.each do |url|
       res = Curl::Html.new(url, browser: options[:browser], fallback: options[:fallback],
                                 headers: headers, headers_only: options[:info],
-                                compressed: options[:compressed], clean: options[:clean])
+                                compressed: options[:compressed], clean: options[:clean],
+                                ignore_local_links: options[:ignore_relative],
+                                ignore_fragment_links: options[:ignore_fragments],
+                                external_links_only: options[:external_links_only])
+
       if options[:info]
         output.push(res.headers)
         # print_out(res.headers, global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
@@ -115,9 +130,9 @@ command %i[html curl] do |c|
         output.push(out)
       elsif options[:query]
         queried = res.to_data.dot_query(options[:query])
-        output = queried if queried
+        output.push(queried) if queried
       else
-        output.push(res.to_data)
+        output.push(res.to_data(url: url))
       end
     end
 
@@ -131,7 +146,7 @@ end
 
 desc 'Save a screenshot of the URL'
 arg_name 'URL', multiple: true
-command %i[screenshot] do |c|
+command :screenshot do |c|
   c.desc 'Type of screenshot to save (full (requires firefox), print, visible)'
   c.flag %i[t type], type: ScreenshotType, must_match: /^[fpv].*?$/, default_value: 'full'
 
@@ -150,17 +165,18 @@ command %i[screenshot] do |c|
     end
   end
 end
+
 desc 'Get a JSON response from a URL, multiple URLs allowed'
 arg_name 'URL', multiple: true
 command :json do |c|
-  c.desc 'Define a header to send as key:value'
+  c.desc 'Define a header to send as key=value'
   c.flag %i[h header], multiple: true
 
   c.desc 'Expect compressed results'
   c.switch %i[c compressed]
 
-  c.desc 'Query path, dot-syntax'
-  c.flag %i[q query]
+  c.desc 'Filter output using dot-syntax path'
+  c.flag %i[q query filter]
 
   c.action do |global_options, options, args|
     urls = args.join(' ').split(/[, ]+/)
@@ -169,11 +185,22 @@ command :json do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Json.new(url, headers: headers, compressed: options[:compressed], symbolize_names: false).json
+      res = Curl::Json.new(url, headers: headers, compressed: options[:compressed], symbolize_names: false)
 
-      res = res.dot_query(options[:query]) if options[:query]
+      json = res.json
 
-      output.push(res)
+      if json.nil?
+        output.push({
+          status: 'error parsing JSON',
+          url: res.url,
+          code: res.code,
+          headers: res.headers
+        })
+      else
+        json = json.dot_query(options[:query]) if options[:query]
+
+        output.push(json)
+      end
     end
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
@@ -189,7 +216,7 @@ command :extract do |c|
   c.desc 'Text after extraction, parsed as regex'
   c.flag %i[a after]
 
-  c.desc 'Define a header to send as key:value'
+  c.desc 'Define a header to send as key=value'
   c.flag %i[h header], multiple: true
 
   c.desc 'Expect compressed results'
@@ -198,6 +225,9 @@ command :extract do |c|
   c.desc 'Remove extra whitespace from results'
   c.switch %i[clean]
 
+  c.desc 'Strip HTML tags from results'
+  c.switch %i[strip]
+
   c.action do |global_options,options,args|
     urls = args.join(' ').split(/[, ]+/)
     headers = break_headers(options[:header])
@@ -205,8 +235,10 @@ command :extract do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Html.new(url, headers: headers, headers_only: options[:headers], compressed: options[:compressed], clean: options[:clean])
+      res = Curl::Html.new(url, headers: headers, headers_only: false,
+                                compressed: options[:compressed], clean: options[:clean])
       extracted = res.extract(options[:before], options[:after])
+      extracted.strip_tags! if options[:strip]
       output.concat(extracted)
     end
 
@@ -217,7 +249,7 @@ end
 desc 'Extract all instances of a tag'
 arg_name 'URL', multiple: true
 command :tags do |c|
-  c.desc 'Define a header to send as key:value'
+  c.desc 'Define a header to send as key=value'
   c.flag %i[h header], multiple: true
 
   c.desc 'Specify a tag to collect'
@@ -259,7 +291,7 @@ desc 'Extract all images from a URL'
 arg_name 'URL', multiple: true
 command :images do |c|
   c.desc 'Type of images to return (img, srcset, opengraph, all)'
-  c.flag %i[t type], multiple: true, type: ImageType, default_value: 'all'
+  c.flag %i[t type], multiple: true, type: ImageType, default_value: ['all']
 
   c.desc 'Expect compressed results'
   c.switch %i[c compressed]
@@ -286,15 +318,42 @@ end
 desc %(Return all links on a URL's page)
 arg_name 'URL', multiple: true
 command :links do |c|
+  c.desc 'Ignore relative hrefs when gathering content links'
+  c.switch %i[ignore_relative], negatable: true
+
+  c.desc 'Ignore fragment hrefs when gathering content links'
+  c.switch %i[ignore_fragments], negatable: true
+
+  c.desc 'Only gather external links'
+  c.switch %i[x external_links_only], default_value: false, negatable: false
+
+  c.desc 'Filter output using dot-syntax path'
+  c.flag %i[q query filter]
+
+  c.desc 'Filter out duplicate links, preserving only first one'
+  c.switch %i[d dedup], negatable: true
+
   c.action do |global_options, options, args|
     urls = args.join(' ').split(/[, ]+/)
 
     output = []
 
     urls.each do |url|
-      res = Curl::Html.new(url, compressed: options[:compressed], clean: options[:clean])
-      output.concat(res.body_links)
+      res = Curl::Html.new(url, compressed: options[:compressed], clean: options[:clean],
+                                ignore_local_links: options[:ignore_relative],
+                                ignore_fragment_links: options[:ignore_fragments],
+                                external_links_only: options[:external_links_only])
+
+      if options[:query]
+        query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
+        queried = { links: res.to_data[:links] }.dot_query(query)
+        output.concat(queried) if queried
+      else
+        output.concat(res.body_links)
+      end
     end
+
+    output.dedup_links! if options[:dedup]
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
   end
@@ -303,8 +362,8 @@ end
 desc %(Return all <head> links on URL's page)
 arg_name 'URL', multiple: true
 command :headlinks do |c|
-  c.desc 'Query path, dot-syntax'
-  c.flag %i[q query]
+  c.desc 'Filter output using dot-syntax path'
+  c.flag %i[q query filter]
 
   c.action do |global_options, options, args|
     urls = args.join(' ').split(/[, ]+/)
@@ -322,6 +381,8 @@ command :headlinks do |c|
         output.push(res.to_data[:meta_links])
       end
     end
+
+    output = output[0] if output.count == 1
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
   end
@@ -342,8 +403,8 @@ command :scrape do |c|
   c.desc 'Remove extra whitespace from results'
   c.switch %i[clean]
 
-  c.desc 'Query path, dot-syntax'
-  c.flag %i[q query]
+  c.desc 'Filter output using dot-syntax path'
+  c.flag %i[q query filter]
 
   c.desc 'Output a raw value for a key'
   c.flag %i[r raw]
@@ -366,10 +427,10 @@ command :scrape do |c|
           out = out.dot_query(options[:query]) if options[:query]
           output.push(out)
         elsif options[:query]
-          queried = res.to_data.dot_query(options[:query])
+          queried = res.to_data(url: url).dot_query(options[:query])
           output = queried if queried
         else
-          output.push(res.to_data)
+          output.push(res.to_data(url: url))
         end
 
         # elements = driver.find_elements(css: options[:query])

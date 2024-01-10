@@ -1,20 +1,20 @@
 # Ensure we require the local version and not one we might have installed already
 require File.join([File.dirname(__FILE__),'lib','curly','version.rb'])
 spec = Gem::Specification.new do |s|
-  s.name = 'curly'
+  s.name = 'curlyq'
   s.version = Curly::VERSION
-  s.author = 'Your Name Here'
-  s.email = 'your@email.address.com'
-  s.homepage = 'http://your.website.com'
+  s.author = 'Brett Terpstra'
+  s.email = 'me@brettterpstra.com'
+  s.homepage = 'https://brettterpstra.com'
   s.platform = Gem::Platform::RUBY
-  s.summary = 'A description of your project'
+  s.summary = 'A CLI helper for curl and web scraping'
   s.files = `git ls-files`.split("
 ")
   s.require_paths << 'lib'
-  s.extra_rdoc_files = ['README.rdoc','curly.rdoc']
-  s.rdoc_options << '--title' << 'curly' << '--main' << 'README.rdoc' << '-ri'
+  s.extra_rdoc_files = ['README.rdoc','curlyq.rdoc']
+  s.rdoc_options << '--title' << 'curlyq' << '--main' << 'README.rdoc' << '-ri'
   s.bindir = 'bin'
-  s.executables << 'curly'
+  s.executables << 'curlyq'
   s.add_development_dependency('rake','~> 0.9.2')
   s.add_development_dependency('rdoc', '~> 4.3')
   s.add_development_dependency('minitest', '~> 5.14')

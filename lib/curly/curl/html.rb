@@ -13,9 +13,9 @@ module Curl
     attr_reader :url, :code, :headers, :meta, :links, :head, :body,
                 :source, :title, :description, :body_links, :body_images, :clean
 
-    def to_data
+    def to_data(url: nil)
       {
-        url: @url,
+        url: @url || url,
         code: @code,
         headers: @headers,
         meta: @meta,
@@ -40,9 +40,15 @@ module Curl
     ##
     ## @return     [HTMLCurl] new page object
     ##
-    def initialize(url, browser: nil, source: nil, headers: nil, headers_only: false, compressed: false, clean: false, fallback: false)
+    def initialize(url, browser: nil, source: nil, headers: nil,
+                   headers_only: false, compressed: false, clean: false, fallback: false,
+                   ignore_local_links: false, ignore_fragment_links: false, external_links_only: false)
       @clean = clean
+      @ignore_local_links = ignore_local_links
+      @ignore_fragment_links = ignore_fragment_links
+      @external_links_only = external_links_only
       @curl = TTY::Which.which('curl')
+      @url = url
       res = if url && browser && browser != :none
               source = curl_dynamic_html(url, browser, headers)
               curl_html(nil, source: source, headers: headers)
@@ -63,10 +69,6 @@ module Curl
       @description = @meta['og:description'] || @meta['description'] unless @meta.nil?
       @body_links = content_links
       @body_images = content_images
-    end
-
-    def initialize(url)
-      @url = url
     end
 
     ##
@@ -97,7 +99,8 @@ module Curl
     def extract(before, after)
       before = /#{Regexp.escape(before)}/ unless before.instance_of?(Regexp)
       after = /#{Regexp.escape(after)}/ unless after.instance_of?(Regexp)
-      @body.scan(/#{before.source}(.*?)#{after.source}/)
+      rx = /(?<=#{before.source})(.*?)(?=#{after.source})/m
+      @body.scan(rx).map { |r| @clean ? r[0].clean : r[0] }
     end
 
     ##
@@ -423,6 +426,12 @@ module Curl
 
         link_href = link_href[2]
 
+        next if link_href =~ /^#/ && (@ignore_fragment_links || @external_links_only)
+
+        next if link_href !~ %r{^(\w+:)?//} && (@ignore_local_links || @external_links_only)
+
+        next if same_origin?(link_href) && @external_links_only
+
         link_title = tag.match(/title=(['"])(.*?)\1/)
         link_title = link_title.nil? ? nil : link_title[2]
 
@@ -448,6 +457,12 @@ module Curl
       link_tags.each do |m|
         href = m['tag'].match(/href=(["'])(.*?)\1/)
         href = href[2] unless href.nil?
+        next if href =~ /^#/ && (@ignore_fragment_links || @external_links_only)
+
+        next if href !~ %r{^(\w+:)?//} && (@ignore_local_links || @external_links_only)
+
+        next if same_origin?(href) && @external_links_only
+
         title = m['tag'].match(/title=(["'])(.*?)\1/)
         title = title[2] unless title.nil?
         rel = m['tag'].match(/rel=(["'])(.*?)\1/)
@@ -556,7 +571,8 @@ module Curl
     ##
     ## @return     [Hash] hash of url, code, headers, meta, links, head, body, and source
     ##
-    def curl_html(url = nil, source: nil, headers: nil, headers_only: false, compressed: false, fallback: false)
+    def curl_html(url = nil, source: nil, headers: nil,
+                  headers_only: false, compressed: false, fallback: false)
       unless url.nil?
         flags = 'SsL'
         flags += headers_only ? 'I' : 'i'
@@ -670,6 +686,16 @@ module Curl
       end
 
       body.encode(Encoding::UTF_8)
+    end
+
+    def same_origin?(href)
+      begin
+        uri = URI(href)
+        origin = URI(@url)
+        uri.host == origin.host
+      rescue StandardError
+        false
+      end
     end
   end
 end

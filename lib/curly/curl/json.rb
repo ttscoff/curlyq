@@ -26,6 +26,9 @@ module Curl
     def initialize(url, headers: nil, compressed: false, symbolize_names: false)
       @curl = TTY::Which.which('curl')
       page = curl_json(url, headers: headers, compressed: compressed, symbolize_names: symbolize_names)
+
+      raise "Error retrieving #{url}" if page.nil? || page.empty?
+
       @url = page[:url]
       @code = page[:code]
       @json = page[:json]
@@ -59,13 +62,21 @@ module Curl
     ##
     def curl_json(url, headers: nil, compressed: false, symbolize_names: false)
       flags = 'SsLi'
-      agent = ['Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us)',
-               'AppleWebKit/533.17.9 (KHTML, like Gecko)',
-               'Version/5.0.2 Mobile/8J2 Safari/6533.18.5'].join(' ')
+      agents = [
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.1',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.'
+      ]
+
       headers = headers.nil? ? '' : headers.map { |h, v| %(-H "#{h}: #{v}") }.join(' ')
       compress = compressed ? '--compressed' : ''
       source = `#{@curl} -#{flags} #{compress} #{headers} '#{url}' 2>/dev/null`
-      source = `#{@curl} -#{flags} #{compress} -A "#{agent}" #{headers} '#{url}' 2>/dev/null` if source.nil? || source.empty?
+      agent = 0
+      while source.nil? || source.empty?
+        source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{url}' 2>/dev/null`
+        break if agent >= agents.count - 1
+      end
 
       return false if source.nil? || source.empty?
 
@@ -86,14 +97,12 @@ module Curl
       end
 
       json = source.strip.force_encoding('utf-8')
-
-      json.gsub!(/[\u{1F600}-\u{1F6FF}]/, '')
-
-      { url: url, code: code, headers: headers, json: JSON.parse(json, symbolize_names: symbolize_names) }
-    rescue StandardError => e
-      warn e
-      warn e.backtrace
-      nil
+      begin
+        json.gsub!(/[\u{1F600}-\u{1F6FF}]/, '')
+        { url: url, code: code, headers: headers, json: JSON.parse(json, symbolize_names: symbolize_names) }
+      rescue StandardError => e
+        { url: url, code: code, headers: headers, json: nil}
+      end
     end
   end
 end

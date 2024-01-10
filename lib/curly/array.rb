@@ -1,6 +1,40 @@
 # frozen_string_literal: true
 
 class ::Array
+  def clean
+    map(&:clean)
+  end
+
+  def clean!
+    replace clean
+  end
+
+  def strip_tags
+    map(&:strip_tags)
+  end
+
+  def strip_tags!
+    replace strip_tags
+  end
+
+  def dedup_links
+    used = []
+    good = []
+    each do |link|
+      href = link[:href].sub(%r{/$}, '')
+      next if used.include?(href)
+
+      used.push(href)
+      good.push(link)
+    end
+
+    good
+  end
+
+  def dedup_links!
+    replace dedup_links
+  end
+
   def dot_query(path)
     output = []
     if path =~ /^\[([\d+.])\]\.?/
