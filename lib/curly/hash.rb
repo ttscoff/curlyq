@@ -110,6 +110,8 @@ class ::Hash
                  r[key] =~ /^#{a[2]}$/i ? true : false
                end
       end
+
+      return false unless keep
     end
 
     keep
