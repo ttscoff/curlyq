@@ -1,0 +1,6 @@
+= curly
+
+Describe your project here
+
+:include:curly.rdoc
+

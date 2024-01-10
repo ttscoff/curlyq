@@ -1,0 +1,416 @@
+#!/usr/bin/env ruby
+require 'gli'
+require 'curly'
+require 'curly/curl'
+
+include GLI::App
+
+program_desc 'A scriptable interface to curl'
+
+version Curly::VERSION
+
+subcommand_option_handling :normal
+arguments :strict
+
+ImageType = Class.new(Symbol)
+accept ImageType do |value|
+  value.normalize_image_type(:all)
+end
+
+BrowserType = Class.new(Symbol)
+accept BrowserType do |value|
+  value.normalize_browser_type(:none)
+end
+
+ScreenshotType = Class.new(Symbol)
+accept ScreenshotType do |value|
+  value.normalize_screenshot_type(:full_page)
+end
+
+desc 'Output YAML instead of json'
+switch %i[y yaml]
+
+desc 'Output "pretty" JSON'
+switch %i[pretty], default_value: true, negatable: true
+
+# TODO: Post method
+
+def self.break_headers(headers)
+  out = {}
+  headers.each do |h|
+    m = h.match(/(?<key>[^=]+)=(?<value>.*?)$/)
+    out[m['key'].strip] = m['value'].strip
+  end
+  out
+end
+
+def self.print_out(output, yaml, raw: false, pretty: true)
+  output = output.to_data if output.respond_to?(:to_data)
+  # Was intended to flatten single responses, but not getting an array back is unpredictable
+  # output = output[0] if output&.is_a?(Array) && output.count == 1
+  if output.is_a?(String)
+    print output
+  elsif raw
+    output = output.join("\n") if output.is_a?(Array)
+    print output
+  else
+    if yaml
+      print YAML.dump(output)
+    else
+      print pretty ? JSON.pretty_generate(output) : JSON.generate(output)
+    end
+  end
+end
+
+desc 'Curl URL and output its elements, multiple URLs allowed'
+arg_name 'URL', multiple: true
+command %i[html curl] do |c|
+  c.desc 'Only retrieve headers/info'
+  c.switch %i[I info], negatable: false
+
+  c.desc 'Regurn an array of matches to a CSS or XPath query'
+  c.flag %i[search]
+
+  c.desc 'Define a header to send as "key=value"'
+  c.flag %i[h header], multiple: true
+
+  c.desc 'Use a browser to retrieve a dynamic web page (firefox, chrome)'
+  c.flag %i[b browser], type: BrowserType, must_match: /^[fc].*?$/
+
+  c.desc %(If curl doesn't work, use a fallback browser (firefox, chrome))
+  c.flag %i[f fallback], type: BrowserType, must_match: /^[fc].*?$/
+
+  c.desc 'Expect compressed results'
+  c.switch %i[c compressed], negatable: false
+
+  c.desc 'Remove extra whitespace from results'
+  c.switch %i[clean]
+
+  c.desc 'Query path, dot-syntax'
+  c.flag %i[q query]
+
+  c.desc 'Output a raw value for a key'
+  c.flag %i[r raw]
+
+  c.action do |global_options, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+    headers = break_headers(options[:header])
+
+    output = []
+
+    urls.each do |url|
+      res = Curl::Html.new(url, browser: options[:browser], fallback: options[:fallback],
+                                headers: headers, headers_only: options[:info],
+                                compressed: options[:compressed], clean: options[:clean])
+      if options[:info]
+        output.push(res.headers)
+        # print_out(res.headers, global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
+        next
+      end
+
+      if options[:search]
+        out = res.search(options[:search])
+
+        out = out.dot_query(options[:query]) if options[:query]
+        output.push(out)
+      elsif options[:query]
+        queried = res.to_data.dot_query(options[:query])
+        output = queried if queried
+      else
+        output.push(res.to_data)
+      end
+    end
+
+    output.delete_if(&:empty?)
+    output = output[0] if output.count == 1
+    output.map! { |o| o[options[:raw].to_sym] } if options[:raw]
+
+    print_out(output, global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
+  end
+end
+
+desc 'Save a screenshot of the URL'
+arg_name 'URL', multiple: true
+command %i[screenshot] do |c|
+  c.desc 'Type of screenshot to save (full (requires firefox), print, visible)'
+  c.flag %i[t type], type: ScreenshotType, must_match: /^[fpv].*?$/, default_value: 'full'
+
+  c.desc 'Browser to use (firefox, chrome)'
+  c.flag %i[b browser], type: BrowserType, must_match: /^[fc].*?$/, default_value: 'chrome'
+
+  c.desc 'File destination'
+  c.flag %i[o out file]
+
+  c.action do |_, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+
+    urls.each do |url|
+      c = Curl::Html.new(url)
+      c.screenshot(options[:out], browser: options[:browser], type: options[:type])
+    end
+  end
+end
+desc 'Get a JSON response from a URL, multiple URLs allowed'
+arg_name 'URL', multiple: true
+command :json do |c|
+  c.desc 'Define a header to send as key:value'
+  c.flag %i[h header], multiple: true
+
+  c.desc 'Expect compressed results'
+  c.switch %i[c compressed]
+
+  c.desc 'Query path, dot-syntax'
+  c.flag %i[q query]
+
+  c.action do |global_options, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+    headers = break_headers(options[:header])
+
+    output = []
+
+    urls.each do |url|
+      res = Curl::Json.new(url, headers: headers, compressed: options[:compressed], symbolize_names: false).json
+
+      res = res.dot_query(options[:query]) if options[:query]
+
+      output.push(res)
+    end
+
+    print_out(output, global_options[:yaml], pretty: global_options[:pretty])
+  end
+end
+
+desc 'Extract contents between two regular expressions'
+arg_name 'URL', multiple: true
+command :extract do |c|
+  c.desc 'Text before extraction, parsed as regex'
+  c.flag %i[b before]
+
+  c.desc 'Text after extraction, parsed as regex'
+  c.flag %i[a after]
+
+  c.desc 'Define a header to send as key:value'
+  c.flag %i[h header], multiple: true
+
+  c.desc 'Expect compressed results'
+  c.switch %i[c compressed]
+
+  c.desc 'Remove extra whitespace from results'
+  c.switch %i[clean]
+
+  c.action do |global_options,options,args|
+    urls = args.join(' ').split(/[, ]+/)
+    headers = break_headers(options[:header])
+
+    output = []
+
+    urls.each do |url|
+      res = Curl::Html.new(url, headers: headers, headers_only: options[:headers], compressed: options[:compressed], clean: options[:clean])
+      extracted = res.extract(options[:before], options[:after])
+      output.concat(extracted)
+    end
+
+    print_out(output, global_options[:yaml], pretty: global_options[:pretty])
+  end
+end
+
+desc 'Extract all instances of a tag'
+arg_name 'URL', multiple: true
+command :tags do |c|
+  c.desc 'Define a header to send as key:value'
+  c.flag %i[h header], multiple: true
+
+  c.desc 'Specify a tag to collect'
+  c.flag %i[t tag], multiple: true
+
+  c.desc 'Expect compressed results'
+  c.switch %i[c compressed]
+
+  c.desc 'Remove extra whitespace from results'
+  c.switch %i[clean]
+
+  c.desc 'CSS/XPath query'
+  c.flag %i[q query search]
+
+  c.action do |global_options, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+    headers = break_headers(options[:header])
+    tags = options[:tag].join(' ').split(/[, ]+/)
+    output = []
+
+    urls.each do |url|
+      res = Curl::Html.new(url, headers: headers, headers_only: options[:headers],
+                                compressed: options[:compressed], clean: options[:clean])
+      output = []
+      if options[:search]
+        output = res.tags.search(options[:search])
+      elsif tags.count.positive?
+        tags.each { |tag| output.concat(res.tags(tag)) }
+      else
+        output.concat(res.tags)
+      end
+    end
+
+    print_out(output, global_options[:yaml], pretty: global_options[:pretty])
+  end
+end
+
+desc 'Extract all images from a URL'
+arg_name 'URL', multiple: true
+command :images do |c|
+  c.desc 'Type of images to return (img, srcset, opengraph, all)'
+  c.flag %i[t type], multiple: true, type: ImageType, default_value: 'all'
+
+  c.desc 'Expect compressed results'
+  c.switch %i[c compressed]
+
+  c.desc 'Remove extra whitespace from results'
+  c.switch %i[clean]
+
+  c.action do |global_options, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+
+    output = []
+
+    types = options[:type].join(' ').split(/[ ,]+/).map(&:normalize_image_type)
+
+    urls.each do |url|
+      res = Curl::Html.new(url, compressed: options[:compressed], clean: options[:clean])
+      output.concat(res.images(types: types))
+    end
+
+    print_out(output, global_options[:yaml], pretty: global_options[:pretty])
+  end
+end
+
+desc %(Return all links on a URL's page)
+arg_name 'URL', multiple: true
+command :links do |c|
+  c.action do |global_options, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+
+    output = []
+
+    urls.each do |url|
+      res = Curl::Html.new(url, compressed: options[:compressed], clean: options[:clean])
+      output.concat(res.body_links)
+    end
+
+    print_out(output, global_options[:yaml], pretty: global_options[:pretty])
+  end
+end
+
+desc %(Return all <head> links on URL's page)
+arg_name 'URL', multiple: true
+command :headlinks do |c|
+  c.desc 'Query path, dot-syntax'
+  c.flag %i[q query]
+
+  c.action do |global_options, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+
+    output = []
+
+    urls.each do |url|
+      res = Curl::Html.new(url, compressed: options[:compressed], clean: options[:clean])
+
+      if options[:query]
+        query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
+        queried = { links: res.to_data[:meta_links] }.dot_query(query)
+        output.concat(queried) if queried
+      else
+        output.push(res.to_data[:meta_links])
+      end
+    end
+
+    print_out(output, global_options[:yaml], pretty: global_options[:pretty])
+  end
+end
+
+desc %(Scrape a page using a web browser, for dynamic (JS) pages. Be sure to have the selected --browser installed.)
+arg_name 'URL', multiple: true
+command :scrape do |c|
+  c.desc 'Browser to use (firefox, chrome)'
+  c.flag %i[b browser], type: BrowserType
+
+  c.desc 'Regurn an array of matches to a CSS or XPath query'
+  c.flag %i[search]
+
+  c.desc 'Define a header to send as "key=value"'
+  c.flag %i[h header], multiple: true
+
+  c.desc 'Remove extra whitespace from results'
+  c.switch %i[clean]
+
+  c.desc 'Query path, dot-syntax'
+  c.flag %i[q query]
+
+  c.desc 'Output a raw value for a key'
+  c.flag %i[r raw]
+
+  c.action do |global_options, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+
+    output = []
+
+    urls.each do |url|
+      driver = Selenium::WebDriver.for options[:browser]
+      begin
+        driver.get url
+        res = driver.page_source
+
+        res = Curl::Html.new(nil, source: res, clean: options[:clean])
+        if options[:search]
+          out = res.search(options[:search])
+
+          out = out.dot_query(options[:query]) if options[:query]
+          output.push(out)
+        elsif options[:query]
+          queried = res.to_data.dot_query(options[:query])
+          output = queried if queried
+        else
+          output.push(res.to_data)
+        end
+
+        # elements = driver.find_elements(css: options[:query])
+
+        # elements.each { |e| output.push(e.text.strip) }
+      ensure
+        driver.quit
+      end
+    end
+
+    output.delete_if(&:empty?)
+
+    output = output[0] if output.count == 1
+
+    if options[:raw]
+      output.map! { |o| o[options[:raw].to_sym] }
+    end
+
+    print_out(output, global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
+  end
+end
+
+pre do |global, command, options, args|
+  # Pre logic here
+  # Return true to proceed; false to abort and not call the
+  # chosen command
+  # Use skips_pre before a command to skip this block
+  # on that command only
+  true
+end
+
+post do |global, command, options, args|
+  # Post logic here
+  # Use skips_post before a command to skip this
+  # block on that command only
+end
+
+on_error do |exception|
+  # Error logic here
+  # return false to skip default error handling
+  true
+end
+
+exit run(ARGV)

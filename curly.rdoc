@@ -1,0 +1,5 @@
+= curly
+
+Generate this with
+    curly _doc
+After you have described your command line interface
