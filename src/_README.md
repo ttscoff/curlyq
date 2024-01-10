@@ -6,6 +6,8 @@
 **A command line helper for curl and web scraping**
 
 _If you find this useful, feel free to [buy me some coffee][donate]._
+
+[donate]: https://brettterpstra.com/donate
 <!--END GITHUB-->
 
 The current version of `curlyq` is <!--VER-->0.0.2<!--END VER-->.

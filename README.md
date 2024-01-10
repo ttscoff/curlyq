@@ -7,6 +7,8 @@
 
 _If you find this useful, feel free to [buy me some coffee][donate]._
 
+[donate]: https://brettterpstra.com/donate
+
 
 The current version of `curlyq` is 0.0.2
 .
