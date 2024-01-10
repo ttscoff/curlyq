@@ -1,22 +1,48 @@
 # frozen_string_literal: true
 
+# Array helpers
 class ::Array
+  ##
+  ## Remove extra spaces from each element of an array of
+  ## strings
+  ##
+  ## @return     [Array] cleaned array
+  ##
   def clean
     map(&:clean)
   end
 
+  ##
+  ## @see #clean
+  ##
   def clean!
     replace clean
   end
 
+  ##
+  ## Strip HTML tags from each element of an array of
+  ## strings
+  ##
+  ## @return     [Array] array of strings with HTML tags removed
+  ##
   def strip_tags
     map(&:strip_tags)
   end
 
+  ##
+  ## Destructive version of #strip_tags
+  ##
+  ## @see #strip_tags
+  ##
   def strip_tags!
     replace strip_tags
   end
 
+  ##
+  ## Remove duplicate links from an array of link objects
+  ##
+  ## @return     [Array] deduped array of link objects
+  ##
   def dedup_links
     used = []
     good = []
@@ -31,10 +57,22 @@ class ::Array
     good
   end
 
+  ##
+  ## Destructive version of #dedup_links
+  ##
+  ## @see #dedup_links
+  ##
   def dedup_links!
     replace dedup_links
   end
 
+  ##
+  ## Convert and execute a dot-syntax query on the array
+  ##
+  ## @param      path  [String]  The dot-syntax path
+  ##
+  ## @return     [Array] Matching elements
+  ##
   def dot_query(path)
     output = []
     if path =~ /^\[([\d+.])\]\.?/
@@ -93,52 +131,4 @@ class ::Array
     end
     output
   end
-
-  # def css_query(path, first_level: false)
-  #   res = map(&:stringify_keys)
-  #   q = path.strip.split(/([ >])+/)
-  #   sep = nil
-
-  #   while q.count.positive?
-  #     el = q.shift
-  #     id, classes, at, op, val = nil
-  #     if el =~ /\[(?<attr>\w+) *(?<op>[*^$]?=) *(?<val>.*?)\]/
-  #       m = Regexp.last_match
-  #       at = m['attr']
-  #       op = m['op']
-  #       val = m['val']
-  #       el.sub!(/\[.*?\]/)
-  #     end
-
-  #     if el =~ /^(?<tag>\w+)?(?<spec>(?:#\w+)|(?:\.\w+)+)?/
-  #       m = Regexp.last_match
-  #       t = m['tag']
-  #       spec = m['spec']
-  #       raise "Invalid CSS path: #{el}" unless t || spec
-
-  #       if spec
-  #         if spec =~ /^#(?<val>[^.]+)/
-  #           id = Regexp.last_match['val']
-  #           spec.sub!(/^#[^.]+/, '')
-  #         end
-
-  #         classes = spec.split(/\./).delete_if(&:nil?)
-  #       end
-  #     end
-
-  #     out = []
-
-  #     res.each do |h|
-  #       if sep.nil? || sep =~ /^ +$/
-  #         out << h if h.tag_match(t, classes, id, at, op, val)
-  #       elsif h.tag_match(t, classes, id, at, op, val, descendant: true)
-  #         out << h
-  #       end
-  #     end
-
-  #     sep = q.shift
-  #   end
-
-  #   out.delete_if { |r| r.tag_match }
-  # end
 end

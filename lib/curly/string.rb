@@ -1,18 +1,38 @@
 # frozen_string_literal: true
 
+##
+## Remove extra spaces and newlines from a string
+##
+## @return     [String] cleaned string
+##
 class ::String
   def clean
     gsub(/[\n ]+/m, ' ').gsub(/> +</, '><')
   end
 
+  ##
+  ## Remove HTML tags from a string
+  ##
+  ## @return     [String] stripped string
+  ##
   def strip_tags
     gsub(%r{</?.*?>}, '')
   end
 
+  ##
+  ## Destructive version of #clean
+  ##
+  ## @see #clean
+  ##
   def clean!
     replace clean
   end
 
+  ##
+  ## Destructive version of #strip_tags
+  ##
+  ## @see #strip_tags
+  ##
   def strip_tags!
     replace strip_tags
   end

@@ -4,7 +4,10 @@
 class ::Hash
   # Extract data using a dot-syntax path
   #
-  # @return Result of path query
+  # @param      path  [String] The path
+  #
+  # @return     Result of path query
+  #
   def dot_query(path)
     res = stringify_keys
     out = []
@@ -52,6 +55,15 @@ class ::Hash
     out
   end
 
+  ##
+  ## Evaluate a comparison
+  ##
+  ## @param      r     [Hash] hash of source elements and
+  ##                   comparison operators
+  ## @param      atr   [String] The attribute to compare
+  ##
+  ## @return     [Boolean] whether the comparison passes or fails
+  ##
   def evaluate_comp(r, atr)
     keep = true
 
@@ -103,6 +115,19 @@ class ::Hash
     keep
   end
 
+  ##
+  ## Test if a hash contains a tag matching filter queries
+  ##
+  ## @param      tag_name    [String] The tag name
+  ## @param      classes     [String] The classes to match
+  ## @param      id          [String] The id attribute to
+  ##                         match
+  ## @param      attribute   [String] The attribute
+  ## @param      operator    [String] The operator, <>= *=
+  ##                         $= ^=
+  ## @param      value       [String] The value to match
+  ## @param      descendant  [Boolean] Check descendant tags
+  ##
   def tag_match(tag_name, classes, id, attribute, operator, value, descendant: false)
     tag = self
     keep = true

@@ -6,7 +6,7 @@ require 'yard'
 
 YARD::Rake::YardocTask.new do |t|
  t.files = ['lib/curly/*.rb']
- t.options = [['--markup=markdown', '--no-private', '-p', 'yard_templates']
+ t.options = ['--markup=markdown', '--no-private', '-p', 'yard_templates']
  # t.stats_options = ['--list-undoc']
 end
 

@@ -285,6 +285,11 @@ module Curl
       res
     end
 
+    ##
+    ## Convert a nokogiri element to Curl::Html format
+    ##
+    ## @param      el    [Nokogiri] element to convert
+    ##
     def nokogiri_to_tag(el)
       attributes = el.attribute_nodes.map do |a|
         { key: a.name, value: a.name =~ /^(class|rel)$/ ? a.value.split(/ /) : a.value }
@@ -522,6 +527,13 @@ module Curl
       res
     end
 
+    ##
+    ## Save a screenshot of a url
+    ##
+    ## @param      destination  [String] File path destination
+    ## @param      browser      [Symbol] The browser (:chrome or :firefox)
+    ## @param      type         [Symbol] The type of screenshot (:full_page, :print_page, or :visible)
+    ##
     def save_screenshot(destination = nil, browser: :chrome, type: :full_page)
       raise 'No URL provided' if url.nil?
 
@@ -688,6 +700,13 @@ module Curl
       body.encode(Encoding::UTF_8)
     end
 
+    ##
+    ## Test if a given url has the same hostname as @url
+    ##
+    ## @param      href  [String] The url to test
+    ##
+    ## @return     [Boolean] true if hostnames match
+    ##
     def same_origin?(href)
       begin
         uri = URI(href)
