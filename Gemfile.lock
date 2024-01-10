@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    curlyq (0.0.1)
+    curlyq (0.0.2)
       gli (~> 2.21.0)
       nokogiri (~> 1.16.0)
       selenium-webdriver (~> 4.16.0)
@@ -10,7 +10,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    gli (2.21.0)
+    gli (2.21.1)
     minitest (5.16.3)
     nokogiri (1.16.0-arm64-darwin)
       racc (~> 1.4)
@@ -25,6 +25,7 @@ GEM
       websocket (~> 1.0)
     tty-which (0.5.0)
     websocket (1.2.10)
+    yard (0.9.34)
 
 PLATFORMS
   arm64-darwin-20
@@ -34,6 +35,7 @@ DEPENDENCIES
   minitest (~> 5.14)
   rake (~> 0.9.2)
   rdoc (~> 4.3)
+  yard (~> 0.9, >= 0.9.26)
 
 BUNDLED WITH
    2.2.29

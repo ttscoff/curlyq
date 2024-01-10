@@ -144,7 +144,7 @@ command %i[html curl] do |c|
   end
 end
 
-desc 'Save a screenshot of the URL'
+desc 'Save a screenshot of a URL'
 arg_name 'URL', multiple: true
 command :screenshot do |c|
   c.desc 'Type of screenshot to save (full (requires firefox), print, visible)'
