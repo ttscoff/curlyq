@@ -1,3 +1,11 @@
+### 0.0.4
+
+2024-01-10 13:54
+
+#### FIXED
+
+- Queries combined with + or & not requiring all matches to be true
+
 ### 0.0.3
 
 2024-01-10 13:38
