@@ -478,7 +478,7 @@ command :scrape do |c|
         output.push(out)
       elsif options[:query]
         queried = res.to_data(url: url).dot_query(options[:query])
-        output = queried if queried
+        output.push(queried) if queried
       else
         output.push(res.to_data(url: url))
       end
