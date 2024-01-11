@@ -27,6 +27,7 @@ class ::Hash
   #
   def dot_query(path)
     res = stringify_keys
+
     out = []
     q = path.split(/(?<![\d.])\./)
     q.each do |pth|
@@ -34,8 +35,8 @@ class ::Hash
       pth.sub!(/\[([0-9,.]+)\]/, '')
       ats = []
       at = []
-      while pth =~ /\[[+&,]?\w+ *[\^*$=<>]=? *\w+/
-        m = pth.match(/\[(?<com>[,+&])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>\w+) */)
+      while pth =~ /\[[+&,]?\w+ *[\^*$=<>]=? *\S.*/
+        m = pth.match(/\[(?<com>[,+&])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>\S.*?)(?=[,\]&+])/)
         comp = [m['key'], m['op'], m['val']]
         case m['com']
         when ','
@@ -45,11 +46,11 @@ class ::Hash
           at.push(comp)
         end
 
-        pth.sub!(/\[(?<com>[,&+])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>\w+)/, '[')
+        pth.sub!(/\[(?<com>[,&+])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>\S.*?)(?=[,\]&+])/, '[')
       end
       ats.push(at) unless at.empty?
-      pth.sub!(/\[\]/, '')
 
+      pth.sub!(/\[.*?\]/, '')
       return false if el.nil? && ats.empty? && !res.key?(pth)
 
       res = res[pth] unless pth.empty?
@@ -93,7 +94,7 @@ class ::Hash
             else
               a[2]
             end
-
+      pp [key, val, r]
       if !r.key?(key)
         keep = false
       elsif r[key].is_a?(Array)
@@ -213,7 +214,12 @@ class ::Hash
     each_with_object({}) do |(k, v), hsh|
       next if k.is_a?(Symbol) && key?(k.to_s)
 
-      hsh[k.to_s] = v.is_a?(Hash) ? v.stringify_keys : v
+      if v.is_a?(Array)
+        hsh[k.to_s] ||= []
+        v.map.with_index { |v2, idx| hsh[k.to_s][idx] = v2.is_a?(Hash) ? v2.stringify_keys : v2 }
+      else
+        hsh[k.to_s] = v.is_a?(Hash) ? v.stringify_keys : v
+      end
     end
   end
 end
