@@ -445,7 +445,7 @@ desc %(Scrape a page using a web browser, for dynamic (JS) pages. Be sure to hav
 arg_name 'URL', multiple: true
 command :scrape do |c|
   c.desc 'Browser to use (firefox, chrome)'
-  c.flag %i[b browser], type: BrowserType
+  c.flag %i[b browser], type: BrowserType, required: true
 
   c.desc 'Regurn an array of matches to a CSS or XPath query'
   c.flag %i[search]
@@ -468,30 +468,19 @@ command :scrape do |c|
     output = []
 
     urls.each do |url|
-      driver = Selenium::WebDriver.for options[:browser]
-      begin
-        driver.get url
-        res = driver.page_source
+      res = Curl::Html.new(url, { browser: options[:browser], clean: options[:clean] })
+      res.curl
 
-        res = Curl::Html.new(nil, { source: res, clean: options[:clean] })
-        res.curl
-        if options[:search]
-          out = res.search(options[:search])
+      if options[:search]
+        out = res.search(options[:search])
 
-          out = out.dot_query(options[:query]) if options[:query]
-          output.push(out)
-        elsif options[:query]
-          queried = res.to_data(url: url).dot_query(options[:query])
-          output = queried if queried
-        else
-          output.push(res.to_data(url: url))
-        end
-
-        # elements = driver.find_elements(css: options[:query])
-
-        # elements.each { |e| output.push(e.text.strip) }
-      ensure
-        driver.quit
+        out = out.dot_query(options[:query]) if options[:query]
+        output.push(out)
+      elsif options[:query]
+        queried = res.to_data(url: url).dot_query(options[:query])
+        output = queried if queried
+      else
+        output.push(res.to_data(url: url))
       end
     end
 

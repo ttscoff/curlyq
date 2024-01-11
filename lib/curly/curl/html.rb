@@ -495,6 +495,7 @@ module Curl
     ##
     def content_links
       links = []
+
       link_tags = @body.to_enum(:scan, %r{<a ?(?<tag>.*?)>(?<text>.*?)</a>}).map { Regexp.last_match }
       link_tags.each do |m|
         href = m['tag'].match(/href=(["'])(.*?)\1/)
@@ -549,7 +550,7 @@ module Curl
     ## @return [String] page source
     ##
     def curl_dynamic_html
-      browser = @browser.normalize_browser_type if @browser.is_a?(String)
+      browser = @browser.is_a?(String) ? @browser.normalize_browser_type : @browser
       res = nil
 
       driver = Selenium::WebDriver.for browser
@@ -622,7 +623,7 @@ module Curl
     ##
     def curl_html(url = nil, source: nil, headers: nil,
                   headers_only: false, compressed: false, fallback: false)
-      unless url.nil?
+      if !url.nil?
         flags = 'SsL'
         flags += @headers_only ? 'I' : 'i'
         agents = [
@@ -635,8 +636,8 @@ module Curl
         compress = @compressed ? '--compressed' : ''
         @source = `#{@curl} -#{flags} #{compress} #{headers} '#{@url}' 2>/dev/null`
         agent = 0
-        while source.nil? || source.empty?
-          source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{@url}' 2>/dev/null`
+        while @source.nil? || @source.empty?
+          @source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{@url}' 2>/dev/null`
           break if agent >= agents.count - 1
         end
 
@@ -645,37 +646,37 @@ module Curl
           Process.exit 1
         end
 
-        if @fallback && (@source.nil? || @source.empty?)
-          @source = curl_dynamic_html(@url, @fallback, @headers)
+        headers = { 'location' => @url }
+        lines = @source.split(/\r\n/)
+        code = lines[0].match(/(\d\d\d)/)[1]
+        lines.shift
+        lines.each_with_index do |line, idx|
+          if line =~ /^([\w-]+): (.*?)$/
+            m = Regexp.last_match
+            headers[m[1]] = m[2]
+          else
+            @source = lines[idx..].join("\n")
+            break
+          end
         end
+
+        if headers['content-encoding'] =~ /gzip/i && !compressed
+          warn 'Response is gzipped, you may need to try again with --compressed'
+        end
+
+        if headers['content-type'] =~ /json/
+          return { url: @url, code: code, headers: headers, meta: nil, links: nil,
+                   head: nil, body: @source.strip, source: @source.strip, body_links: nil, body_images: nil }
+        end
+      else
+        @source = source unless source.nil?
       end
 
-      return false if source.nil? || source.empty?
+      @source = curl_dynamic_html(@url, @fallback, @headers) if @fallback && (@source.nil? || @source.empty?)
+
+      return false if @source.nil? || @source.empty?
 
       @source.strip!
-
-      headers = { 'location' => @url }
-      lines = @source.split(/\r\n/)
-      code = lines[0].match(/(\d\d\d)/)[1]
-      lines.shift
-      lines.each_with_index do |line, idx|
-        if line =~ /^([\w-]+): (.*?)$/
-          m = Regexp.last_match
-          headers[m[1]] = m[2]
-        else
-          @source = lines[idx..].join("\n")
-          break
-        end
-      end
-
-      if headers['content-encoding'] =~ /gzip/i && !compressed
-        warn 'Response is gzipped, you may need to try again with --compressed'
-      end
-
-      if headers['content-type'] =~ /json/
-        return { url: @url, code: code, headers: headers, meta: nil, links: nil,
-                 head: nil, body: @source.strip, source: @source.strip, body_links: nil, body_images: nil }
-      end
 
       head = source.match(%r{(?<=<head>)(.*?)(?=</head>)}mi)
 
@@ -683,11 +684,12 @@ module Curl
         { url: @url, code: code, headers: headers, meta: nil, links: nil, head: nil, body: @source.strip,
           source: @source.strip, body_links: nil, body_images: nil }
       else
+        @body = @source.match(%r{<body.*?>(.*?)</body>}mi)[1]
         meta = meta_tags(head[1])
         links = link_tags(head[1])
-        body = @source.match(%r{<body.*?>(.*?)</body>}mi)[1]
-        { url: @url, code: code, headers: headers, meta: meta, links: links, head: head[1], body: body,
-          source: @source.strip, body_links: body_links, body_images: body_images }
+
+        { url: @url, code: code, headers: headers, meta: meta, links: links, head: head[1], body: @body,
+          source: @source.strip, body_links: nil, body_images: nil }
       end
     end
 

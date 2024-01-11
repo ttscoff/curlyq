@@ -3,20 +3,24 @@
 # Hash helpers
 class ::Hash
   def to_data(url: nil, clean: false)
-    {
-      url: self[:url] || url,
-      code: self[:code],
-      headers: self[:headers],
-      meta: self[:meta],
-      meta_links: self[:links],
-      head: clean ? self[:head]&.strip&.clean : self[:head],
-      body: clean ? self[:body]&.strip&.clean : self[:body],
-      source: clean ? self[:source]&.strip&.clean : self[:source],
-      title: self[:title],
-      description: self[:description],
-      links: self[:body_links],
-      images: self[:body_images]
-    }
+    if key?(:body_links)
+      {
+        url: self[:url] || url,
+        code: self[:code],
+        headers: self[:headers],
+        meta: self[:meta],
+        meta_links: self[:links],
+        head: clean ? self[:head]&.strip&.clean : self[:head],
+        body: clean ? self[:body]&.strip&.clean : self[:body],
+        source: clean ? self[:source]&.strip&.clean : self[:source],
+        title: self[:title],
+        description: self[:description],
+        links: self[:body_links],
+        images: self[:body_images]
+      }
+    else
+      self
+    end
   end
 
   # Extract data using a dot-syntax path

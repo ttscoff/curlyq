@@ -241,13 +241,19 @@ The `json` command just returns an object with header/response info, and the con
 
 ##### links
 
+Returns all the links on the page, which can be queried on any attribute.
 
+Example:
+
+    curlyq images -t img -q '[width>750]' https://brettterpstra.com
 
 ```
 @cli(bundle exec bin/curlyq help links)
 ```
 
 ##### scrape
+
+Loads the page in a web browser, allowing scraping of dynamically loaded pages that return nothing but scripts when `curl`ed.
 
 ```
 @cli(bundle exec bin/curlyq help scrape)
@@ -262,6 +268,8 @@ Full-page screenshots require Firefox, installed and specified with `--browser f
 ```
 
 ##### tags
+
+Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag.
 
 ```
 @cli(bundle exec bin/curlyq help tags)
