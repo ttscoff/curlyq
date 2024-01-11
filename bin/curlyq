@@ -398,7 +398,7 @@ command :links do |c|
 
       if options[:query]
         query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
-        queried = { links: res.to_data[:links] }.dot_query(query)
+        queried = res.to_data.dot_query(query)
         output.concat(queried) if queried
       else
         output.concat(res.body_links)

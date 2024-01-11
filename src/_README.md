@@ -241,6 +241,8 @@ The `json` command just returns an object with header/response info, and the con
 
 ##### links
 
+
+
 ```
 @cli(bundle exec bin/curlyq help links)
 ```
