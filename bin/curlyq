@@ -332,6 +332,9 @@ command :images do |c|
   c.desc 'Remove extra whitespace from results'
   c.switch %i[clean]
 
+  c.desc 'Filter output using dot-syntax path'
+  c.flag %i[q query filter]
+
   c.desc 'Define a header to send as key=value'
   c.flag %i[h header], multiple: true
 
@@ -346,7 +349,15 @@ command :images do |c|
     urls.each do |url|
       res = Curl::Html.new(url, { compressed: options[:compressed], clean: options[:clean] })
       res.curl
-      output.concat(res.images(types: types))
+
+      res = res.images(types: types)
+
+      if options[:query]
+        query = options[:query] =~ /^images/ ? options[:query] : "images#{options[:query]}"
+        res = { images: res }.dot_query(query)
+      end
+
+      output.concat(res)
     end
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])

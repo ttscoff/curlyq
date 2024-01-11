@@ -39,6 +39,25 @@ Run `curlyq help` for a list of subcommands. Run `curlyq help SUBCOMMAND` for de
 @cli(bundle exec bin/curlyq help)
 ```
 
+### Query and Search syntax
+
+You can shape the results using `--search` (`-s`) and `--query` (`-q`) on some commands.
+
+A search uses either CSS or XPath syntax to locate elements. For example, if you wanted to locate all of the `<article>` elements with a class of `post` inside of the div with an id of `main`, you would run `--search '#main article.post'`. Searches can target tags, ids, and classes, and can accept `>` to target direct descendents. You can also use XPaths, but I hate those so I'm not going to document them.
+
+Queries are specifically for shaping CurlyQ output. If you're using the `html` command, it returns a key called `images`, so you can target just the images in the response with `-q 'images'`. The queries accept array syntax, so to get the first image, you would use `-q 'images[0]'`. Ranges are accepted as well, so `-q 'images[1..4]'` will return the 2nd through 5th images found on the page. You can also do comparisons, e.g. `images[rel=me]'` to target only images with a `rel` attribute of `me`.
+
+The comparisons for the query flag are:
+
+- `<` less than
+- `>` greater than
+- `<=` less than or equal to
+- `>=` greater than or equal to
+- `=` or `==` is equal to
+- `*=` contains text
+- `^=` starts with text
+- `$=` ends with text
+
 #### Commands
 
 curlyq makes use of subcommands, e.g. `curlyq html [options] URL` or `curlyq extract [options] URL`. Each subcommand takes its own options, but I've made an effort to standardize the choices between each command as much as possible.
@@ -113,7 +132,28 @@ You can add a query (`-q`) to only get the information needed, e.g. `-q images[w
 
 Example:
 
+    curlyq html -s '#main article .aligncenter' -q 'images[1]' 'https://brettterpstra.com'
 
+    [
+      {
+        "class": "aligncenter",
+        "original": "https://cdn3.brettterpstra.com/uploads/2023/09/giveaway-keyboardmaestro2024-rb_tw.jpg",
+        "at2x": "https://cdn3.brettterpstra.com/uploads/2023/09/giveaway-keyboardmaestro2024-rb@2x.jpg",
+        "width": "800",
+        "height": "226",
+        "src": "https://cdn3.brettterpstra.com/uploads/2023/09/giveaway-keyboardmaestro2024-rb.jpg",
+        "alt": "Giveaway Robot with Keyboard Maestro icon",
+        "title": "Giveaway Robot with Keyboard Maestro icon"
+      }
+    ]
+
+The above example queries the full html of the page, but narrows the elements using `--search` and then takes the 2nd image from the results.
+
+    curlyq html -q 'meta.title'  https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/
+
+    Introducing CurlyQ, a pipeline-oriented curl helper - BrettTerpstra.com
+
+The above example curls the page and returns the title attribute found in the meta (`-q 'meta.title'`).
 
 ```
 @cli(bundle exec bin/curlyq help html)
@@ -121,11 +161,79 @@ Example:
 
 ##### images
 
+The images command returns only the images on the page as an array of objects. It can be queried to match certain requirements (see Query and Search syntax above).
+
+The base command will return all images on the page, including OpenGraph images from the head, `<img>` tags from the body, and `<srcset>` tags along with their child images.
+
+OpenGraph images will be returned with the structure:
+
+    {
+        "type": "opengraph",
+        "attrs": null,
+        "src": "https://cdn3.brettterpstra.com/uploads/2024/01/curlyq_header-rb_tw.jpg"
+      }
+
+`img` tags will be returned with the structure:
+
+    {
+        "type": "img",
+        "src": "https://cdn3.brettterpstra.com/uploads/2024/01/curlyq_header-rb.jpg",
+        "width": "800",
+        "height": "226",
+        "alt": "Banner image for CurlyQ",
+        "title": "CurlyQ, curl better",
+        "attrs": [
+          {
+            "key": "class",
+            "value": [
+              "aligncenter"
+            ], // all attributes included
+          }
+        ]
+      }
+
+
+
+`srcset` images will be returned with the structure:
+
+    {
+        "type": "srcset",
+            "attrs": [
+              {
+                "key": "srcset",
+                "value": "https://cdn3.brettterpstra.com/uploads/2024/01/curlyq_header-rb_tw.jpg 1x, https://cdn3.brettterpstra.com/uploads/2024/01/curlyq_header-rb@2x.jpg 2x"
+              }
+            ],
+            "images": [
+              {
+                "src": "https://cdn3.brettterpstra.com/uploads/2024/01/curlyq_header-rb_tw.jpg",
+                "media": "1x"
+              },
+              {
+                "src": "https://cdn3.brettterpstra.com/uploads/2024/01/curlyq_header-rb@2x.jpg",
+                "media": "2x"
+              }
+          ]
+        }
+    }
+
+Example:
+
+    curlyq images -t img -q '[alt$=screenshot]' https://brettterpstra.com
+
+This will return an array of images that are `<img>` tags, and only show the ones that have an `alt` attribute that ends with `screenshot`.
+
+    curlyq images -q '[width>750]' https://brettterpstra.com
+
+This example will only return images that have a width greater than 750 pixels. This query depends on the images having proper `width` attributes set on them in the source.
+
 ```
 @cli(bundle exec bin/curlyq help images)
 ```
 
 ##### json
+
+The `json` command just returns an object with header/response info, and the contents of the JSON response after it's been read by the Ruby JSON library and output. If there are fetching or parsing errors it will fail gracefully with an error code.
 
 ```
 @cli(bundle exec bin/curlyq help json)
