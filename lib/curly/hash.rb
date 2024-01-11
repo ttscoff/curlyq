@@ -35,7 +35,7 @@ class ::Hash
       ats = []
       at = []
       while pth =~ /\[[+&,]?\w+ *[\^*$=<>]=? *\w+/
-        m = pth.match(/\[(?<com>[,+&])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>[\w-]+) */)
+        m = pth.match(/\[(?<com>[,+&])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+) */)
         comp = [m['key'], m['op'], m['val']]
         case m['com']
         when ','
@@ -45,7 +45,7 @@ class ::Hash
           at.push(comp)
         end
 
-        pth.sub!(/\[(?<com>[,&+])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>[\w-]+)/, '[')
+        pth.sub!(/\[(?<com>[,&+])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+)/, '[')
       end
       ats.push(at) unless at.empty?
       pth.sub!(/\[\]/, '')
