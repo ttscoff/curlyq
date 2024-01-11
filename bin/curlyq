@@ -71,7 +71,7 @@ command %i[html curl] do |c|
   c.switch %i[I info], negatable: false
 
   c.desc 'Regurn an array of matches to a CSS or XPath query'
-  c.flag %i[search]
+  c.flag %i[s search]
 
   c.desc 'Define a header to send as "key=value"'
   c.flag %i[h header], multiple: true
@@ -110,25 +110,31 @@ command %i[html curl] do |c|
     output = []
 
     urls.each do |url|
-      res = Curl::Html.new(url, { browser: options[:browser], fallback: options[:fallback],
-                                  headers: headers, headers_only: options[:info],
-                                  compressed: options[:compressed], clean: options[:clean],
-                                  ignore_local_links: options[:ignore_relative],
-                                  ignore_fragment_links: options[:ignore_fragments],
-                                  external_links_only: options[:external_links_only] })
+      curl_settings = { browser: options[:browser], fallback: options[:fallback],
+                        headers: headers, headers_only: options[:info],
+                        compressed: options[:compressed], clean: options[:clean],
+                        ignore_local_links: options[:ignore_relative],
+                        ignore_fragment_links: options[:ignore_fragments],
+                        external_links_only: options[:external_links_only] }
+      res = Curl::Html.new(url, curl_settings)
       res.curl
 
       if options[:info]
         output.push(res.headers)
-        # print_out(res.headers, global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
         next
       end
 
       if options[:search]
-        out = res.search(options[:search])
+        source = res.search(options[:search], return_source: true)
 
-        out = out.dot_query(options[:query]) if options[:query]
-        output.push(out)
+        out = res.parse(source)
+
+        if options[:query]
+          out = out.to_data(url: url, clean: options[:clean]).dot_query(options[:query])
+        else
+          out = out.to_data
+        end
+        output.push([out])
       elsif options[:query]
         queried = res.to_data.dot_query(options[:query])
         output.push(queried) if queried
@@ -136,7 +142,7 @@ command %i[html curl] do |c|
         output.push(res.to_data(url: url))
       end
     end
-
+    output.delete_if(&:nil?)
     output.delete_if(&:empty?)
     output = output[0] if output.count == 1
     output.map! { |o| o[options[:raw].to_sym] } if options[:raw]
@@ -221,11 +227,17 @@ end
 desc 'Extract contents between two regular expressions'
 arg_name 'URL', multiple: true
 command :extract do |c|
-  c.desc 'Text before extraction, parsed as regex'
+  c.desc 'Text before extraction'
   c.flag %i[b before]
 
-  c.desc 'Text after extraction, parsed as regex'
+  c.desc 'Text after extraction'
   c.flag %i[a after]
+
+  c.desc 'Process before/after strings as regular expressions'
+  c.switch %i[r regex]
+
+  c.desc 'Include the before/after matches in the result'
+  c.switch %i[i include]
 
   c.desc 'Define a header to send as key=value'
   c.flag %i[h header], multiple: true
@@ -249,7 +261,15 @@ command :extract do |c|
       res = Curl::Html.new(url, { headers: headers, headers_only: false,
                                   compressed: options[:compressed], clean: options[:clean] })
       res.curl
-      extracted = res.extract(options[:before], options[:after])
+      if options[:regex]
+        before = Regexp.new(options[:before])
+        after = Regexp.new(options[:after])
+      else
+        before = /#{Regexp.escape(options[:before])}/
+        after = /#{Regexp.escape(options[:after])}/
+      end
+
+      extracted = res.extract(before, after, inclusive: options[:include])
       extracted.strip_tags! if options[:strip]
       output.concat(extracted)
     end

@@ -65,7 +65,13 @@ module Curl
       @external_links_only = options[:external_links_only]
 
       @curl = TTY::Which.which('curl')
-      @url = url
+      @url = url.nil? ? options[:url] : url
+    end
+
+    def parse(source)
+      @body = source
+      { url: @url, code: @code, headers: @headers, meta: @meta, links: @links, head: @head, body: source,
+        source: source.strip, body_links: content_links, body_images: content_images }
     end
 
     def curl
@@ -118,10 +124,15 @@ module Curl
     ##
     ## @return     [Array] array of matches
     ##
-    def extract(before, after)
-      before = /#{Regexp.escape(before)}/ unless before.instance_of?(Regexp)
-      after = /#{Regexp.escape(after)}/ unless after.instance_of?(Regexp)
-      rx = /(?<=#{before.source})(.*?)(?=#{after.source})/m
+    def extract(before, after, inclusive: false)
+      before = /#{Regexp.escape(before)}/ unless before.is_a?(Regexp)
+      after = /#{Regexp.escape(after)}/ unless after.is_a?(Regexp)
+
+      if inclusive
+        rx = /(#{before.source}.*?#{after.source})/m
+      else
+        rx = /(?<=#{before.source})(.*?)(?=#{after.source})/m
+      end
       @body.scan(rx).map { |r| @clean ? r[0].clean : r[0] }
     end
 
@@ -343,12 +354,16 @@ module Curl
     ##
     ## @return     [Array] array of matched elements
     ##
-    def search(path, source: @source)
+    def search(path, source: @source, return_source: false)
       doc = Nokogiri::HTML(source)
       output = []
-      doc.search(path).each do |el|
-        out = nokogiri_to_tag(el)
-        output.push(out)
+      if return_source
+        output = doc.search(path).to_html
+      else
+        doc.search(path).each do |el|
+          out = nokogiri_to_tag(el)
+          output.push(out)
+        end
       end
       output
     end

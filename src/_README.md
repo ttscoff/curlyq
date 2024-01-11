@@ -10,7 +10,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [donate]: https://brettterpstra.com/donate
 <!--END GITHUB-->
 
-The current version of `curlyq` is <!--VER-->0.0.3<!--END VER-->.
+The current version of `curlyq` is <!--VER-->0.0.4<!--END VER-->.
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
 
@@ -45,6 +45,16 @@ curlyq makes use of subcommands, e.g. `curlyq html [options] URL` or `curlyq ext
 
 ##### extract
 
+Example: 
+
+    curlyq extract -i -b 'Adding' -a 'accessing the source.' 'https://stackoverflow.com/questions/52428409/get-fully-rendered-html-using-selenium-webdriver-and-python'
+
+    [
+      "Adding <code>time.sleep(10)</code> in various places in case the page had not fully loaded when I was accessing the source."
+    ]
+
+This specifies a before and after string and includes them (`-i`) in the result.
+
 ```
 @cli(bundle exec bin/curlyq help extract)
 ```
@@ -52,11 +62,58 @@ curlyq makes use of subcommands, e.g. `curlyq html [options] URL` or `curlyq ext
 
 ##### headlinks
 
+Example:
+
+    curlyq headlinks -q '[rel=stylesheet]' https://brettterpstra.com
+
+    {
+      "rel": "stylesheet",
+      "href": "https://cdn3.brettterpstra.com/stylesheets/screen.7261.css",
+      "type": "text/css",
+      "title": null
+    }
+
+This pulls all `<links>` from the `<head>` of the page, and uses a query `-q` to only show links with `rel="stylesheet"`.
+
 ```
 @cli(bundle exec bin/curlyq help headlinks)
 ```
 
 ##### html
+
+The html command (aliased as `curl`) gets the entire text of the web page and provides a JSON response with a breakdown of:
+
+- URL, after any redirects
+- Response code
+- Response headers as a keyed hash
+- Meta elements for the page as a keyed hash
+- All meta links in the head as an array of objects containing (as available): 
+    - rel
+    - href
+    - type
+    - title
+- source of `<head>`
+- source of `<body>`
+- the page title (determined first by og:title, then by a title tag)
+- description (using og:description first)
+- All links on the page as an array of objects with: 
+    - href
+    - title
+    - rel
+    - text content
+    - classes as array
+- All images on the page as an array of objects containing:
+    - class
+    - all attributes as key/value pairs
+    - width and height (if specified)
+    - src
+    - alt and title
+
+You can add a query (`-q`) to only get the information needed, e.g. `-q images[width>600]`.
+
+Example:
+
+
 
 ```
 @cli(bundle exec bin/curlyq help html)

@@ -2,6 +2,23 @@
 
 # Hash helpers
 class ::Hash
+  def to_data(url: nil, clean: false)
+    {
+      url: self[:url] || url,
+      code: self[:code],
+      headers: self[:headers],
+      meta: self[:meta],
+      meta_links: self[:links],
+      head: clean ? self[:head]&.strip&.clean : self[:head],
+      body: clean ? self[:body]&.strip&.clean : self[:body],
+      source: clean ? self[:source]&.strip&.clean : self[:source],
+      title: self[:title],
+      description: self[:description],
+      links: self[:body_links],
+      images: self[:body_images]
+    }
+  end
+
   # Extract data using a dot-syntax path
   #
   # @param      path  [String] The path
@@ -60,7 +77,7 @@ class ::Hash
   ##
   ## @param      r     [Hash] hash of source elements and
   ##                   comparison operators
-  ## @param      atr   [String] The attribute to compare
+  ## @param      atr   [Array] Array of arrays conaining [attribute,comparitor,value]
   ##
   ## @return     [Boolean] whether the comparison passes or fails
   ##
@@ -118,7 +135,7 @@ class ::Hash
   end
 
   ##
-  ## Test if a hash contains a tag matching filter queries
+  ## Test if a tag contains an attribute matching filter queries
   ##
   ## @param      tag_name    [String] The tag name
   ## @param      classes     [String] The classes to match
