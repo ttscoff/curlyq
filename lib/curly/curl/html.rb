@@ -678,7 +678,7 @@ module Curl
 
       @source.strip!
 
-      head = source.match(%r{(?<=<head>)(.*?)(?=</head>)}mi)
+      head = @source.match(%r{(?<=<head>)(.*?)(?=</head>)}mi)
 
       if head.nil?
         { url: @url, code: code, headers: headers, meta: nil, links: nil, head: nil, body: @source.strip,

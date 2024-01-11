@@ -155,13 +155,13 @@ desc 'Save a screenshot of a URL'
 arg_name 'URL', multiple: true
 command :screenshot do |c|
   c.desc 'Type of screenshot to save (full (requires firefox), print, visible)'
-  c.flag %i[t type], type: ScreenshotType, must_match: /^[fpv].*?$/, default_value: 'full'
+  c.flag %i[t type], type: ScreenshotType, must_match: /^[fpv].*?$/, default_value: 'visible'
 
   c.desc 'Browser to use (firefox, chrome)'
   c.flag %i[b browser], type: BrowserType, must_match: /^[fc].*?$/, default_value: 'chrome'
 
   c.desc 'File destination'
-  c.flag %i[o out file]
+  c.flag %i[o out file], required: true
 
   c.desc 'Define a header to send as key=value'
   c.flag %i[h header], multiple: true
@@ -170,11 +170,19 @@ command :screenshot do |c|
     urls = args.join(' ').split(/[, ]+/)
     headers = break_headers(options[:header])
 
+    type = options[:type]
+    browser = options[:browser]
+
+    type = type.is_a?(Symbol) ? type : type.normalize_screenshot_type
+    browser = browser.is_a?(Symbol) ? browser : browser.normalize_browser_type
+
+    raise 'Full page screen shots only available with Firefox' if type == :full_page && browser != :firefox
+
     urls.each do |url|
       c = Curl::Html.new(url)
       c.headers = headers
-      c.browser = options[:browser]
-      c.screenshot(options[:out], type: options[:type])
+      c.browser = browser
+      c.screenshot(options[:out], type: type)
     end
   end
 end

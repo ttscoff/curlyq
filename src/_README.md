@@ -253,7 +253,25 @@ Example:
 
 ##### scrape
 
-Loads the page in a web browser, allowing scraping of dynamically loaded pages that return nothing but scripts when `curl`ed.
+Loads the page in a web browser, allowing scraping of dynamically loaded pages that return nothing but scripts when `curl`ed. The `-b` (`--browser`) option is required and should be 'chrome' or 'firefox' (or just 'c' or 'f'). The selected browser must be installed on your system.
+
+Example:
+
+    curlyq scrape -b firefox -q 'links[rel=me&content*=mastodon][0]' https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/
+
+    {
+      "href": "https://nojack.easydns.ca/@ttscoff",
+      "title": null,
+      "rel": [
+        "me"
+      ],
+      "content": "Mastodon",
+      "class": [
+        "u-url"
+      ]
+    }
+
+This example scrapes the page using firefox and finds the first link with a rel of 'me' and text containing 'mastodon'.
 
 ```
 @cli(bundle exec bin/curlyq help scrape)
@@ -262,6 +280,17 @@ Loads the page in a web browser, allowing scraping of dynamically loaded pages t
 ##### screenshot
 
 Full-page screenshots require Firefox, installed and specified with `--browser firefox`.
+
+Type defaults to `full`, but will only work if `-b` is Firefox. If you want to use Chrome, you must specify a `--type` as 'visible' or 'print'.
+
+The `-o` (`--output`) flag is required. It should be a path to a target PNG file (or PDF for `-t print` output). Extension will be modified automatically, all you need is the base name.
+
+Example:
+
+    curlyq screenshot -b f -o ~/Desktop/test https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/
+
+    Screenshot saved to /Users/ttscoff/Desktop/test.png
+
 
 ```
 @cli(bundle exec bin/curlyq help screenshot)
