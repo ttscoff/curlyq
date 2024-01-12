@@ -243,11 +243,11 @@ module Curl
           when /source/
             next unless %i[all srcset].include?(type)
 
-            srcsets = img[:attrs].filter { |k| k[:key] =~ /srcset/i }
+            srcsets = img[:attrs].filter { |k| k == 'srcset' }
             if srcsets.count.positive?
               srcset = []
-              srcsets.each do |src|
-                src[:value].split(/ *, */).each do |s|
+              srcsets.each do |k, v|
+                v.split(/ *, */).each do |s|
                   image, media = s.split(/ /)
                   srcset << {
                     src: image,
@@ -263,15 +263,14 @@ module Curl
             end
           when /img/
             next unless %i[all img].include?(type)
-
-            width = img[:attrs].select { |a| a[:key] == 'width' }.first[:value]
-            height = img[:attrs].select { |a| a[:key] == 'height' }.first[:value]
-            alt = img[:attrs].select { |a| a[:key] == 'alt' }.first[:value]
-            title = img[:attrs].select { |a| a[:key] == 'title' }.first[:value]
+            width = img[:attrs]['width']
+            height = img[:attrs]['height']
+            alt = img[:attrs]['alt']
+            title = img[:attrs]['title']
 
             output << {
               type: 'img',
-              src: img[:attrs].filter { |a| a[:key] =~ /src/i }.first[:value],
+              src: img[:attrs]['src'],
               width: width || 'unknown',
               height: height || 'unknown',
               alt: alt,
@@ -324,8 +323,9 @@ module Curl
     ## @param      el    [Nokogiri] element to convert
     ##
     def nokogiri_to_tag(el)
-      attributes = el.attribute_nodes.map do |a|
-        { key: a.name, value: a.name =~ /^(class|rel)$/ ? a.value.split(/ /) : a.value }
+      attributes = {}
+      attributes = el.attribute_nodes.each_with_object({}) do |a, hsh|
+        hsh[a.name] = a.name =~ /^(class|rel)$/ ? a.value.split(/ /) : a.value
       end
 
       {
@@ -405,12 +405,12 @@ module Curl
           attrs = tag['attrs'].strip.to_enum(:scan, /(?ix)
                                              (?<key>[@a-z0-9-]+)(?:=(?<quot>["'])
                                              (?<value>[^"']+)\k<quot>|[ >])?/i).map { Regexp.last_match }
-          attrs.map! { |a| { key: a['key'], value: a['key'] =~ /^(class|rel)$/ ? a['value'].split(/ /) : a['value'] } }
+          attributes = attrs.each_with_object({}) { |a, hsh| hsh[a['key']] = a['key'] =~ /^(class|rel)$/ ? a['value'].split(/ /) : a['value'] }
         end
         {
           tag: tag['tag'],
           source: tag.to_s,
-          attrs: attrs,
+          attrs: attributes,
           content: @clean ? tag['content']&.clean : tag['content'],
           tags: content_tags(tag['content'])
         }

@@ -10,7 +10,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [donate]: https://brettterpstra.com/donate
 <!--END GITHUB-->
 
-The current version of `curlyq` is <!--VER-->0.0.5<!--END VER-->.
+The current version of `curlyq` is <!--VER-->0.0.4<!--END VER-->.
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
 
@@ -184,10 +184,9 @@ OpenGraph images will be returned with the structure:
         "title": "CurlyQ, curl better",
         "attrs": [
           {
-            "key": "class",
-            "value": [
+            "class": [
               "aligncenter"
-            ], // all attributes included
+             ], // all attributes included
           }
         ]
       }
@@ -245,7 +244,22 @@ Returns all the links on the page, which can be queried on any attribute.
 
 Example:
 
-    curlyq images -t img -q '[width>750]' https://brettterpstra.com
+    curlyq links -q '[content*=twitter]' 'https://stackoverflow.com/questions/52428409/get-fully-rendered-html-using-selenium-webdriver-and-python'
+
+    [
+      {
+        "href": "https://twitter.com/stackoverflow",
+        "title": null,
+        "rel": null,
+        "content": "Twitter",
+        "class": [
+          "-link",
+          "js-gps-track"
+        ]
+      }
+    ]
+
+This example gets all links from the page but only returns ones with link content containing 'twitter' (`-q '[content*=twitter]'`).
 
 ```
 @cli(bundle exec bin/curlyq help links)
@@ -298,7 +312,27 @@ Example:
 
 ##### tags
 
-Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag. This command needs work on the query/search features, they don't currently work in combination.
+Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag.
+
+    curlyq tags --search '#main .post h3' -q 'attrs[id*=what]' https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/
+
+    [
+      {
+        "tag": "h3",
+        "source": "<h3 id=\"whats-next\">What’s Next</h3>",
+        "attrs": [
+          {
+            "id": "whats-next"
+          }
+        ],
+        "content": "What’s Next",
+        "tags": [
+
+        ]
+      }
+    ]
+
+The above command filters the tags based on a CSS query, then further filters them to just tags with an id containing 'what'.
 
 ```
 @cli(bundle exec bin/curlyq help tags)

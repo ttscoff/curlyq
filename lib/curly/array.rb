@@ -66,6 +66,30 @@ class ::Array
     replace dedup_links
   end
 
+  #---------------------------------------------------------
+  ## Run a query on array elements
+  ##
+  ## @param      path [String] dot.syntax path to compare
+  ##
+  ## @return [Array] elements matching dot query
+  ##
+  def dot_query(path)
+    filter! do |tag|
+      r = tag.dot_query(path)
+      if r.is_a?(Array)
+        r.count.positive?
+      else
+        r
+      end
+    end
+
+    return self
+  end
+
+  def to_html
+    map { |el| el.to_html }
+  end
+
   ##
   ## Test if a tag contains an attribute matching filter queries
   ##

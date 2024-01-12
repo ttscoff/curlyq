@@ -23,6 +23,12 @@ class ::Hash
     end
   end
 
+  def to_html
+    if key?(:source)
+      self[:source]
+    end
+  end
+
   # Extract data using a dot-syntax path
   #
   # @param      path  [String] The path
@@ -31,6 +37,7 @@ class ::Hash
   #
   def dot_query(path)
     res = stringify_keys
+
     out = []
     q = path.split(/(?<![\d.])\./)
     q.each do |pth|
@@ -54,7 +61,9 @@ class ::Hash
       ats.push(at) unless at.empty?
       pth.sub!(/\[\]/, '')
 
+      res = res[0] if res.is_a?(Array)
       return false if el.nil? && ats.empty? && !res.key?(pth)
+
       res = res[pth] unless pth.empty?
 
       return false if res.nil?
@@ -62,10 +71,11 @@ class ::Hash
       if ats.count.positive?
         while ats.count.positive?
           atr = ats.shift
-
+          res = [res] if res.is_a?(Hash)
           keepers = res.filter do |r|
             evaluate_comp(r, atr)
           end
+
           out.concat(keepers)
         end
       else
@@ -74,6 +84,7 @@ class ::Hash
 
       out = out[eval(el)] if out.is_a?(Array) && el =~ /^[\d.,]+$/
     end
+
     out
   end
 
@@ -88,6 +99,8 @@ class ::Hash
   ##
   def evaluate_comp(r, atr)
     keep = true
+
+    r = r.symbolize_keys
 
     atr.each do |a|
       key = a[0].to_sym
@@ -206,10 +219,26 @@ class ::Hash
     end
   end
 
-  # Turn all keys into string
+  # Turn all keys into symbols
   #
   # If the hash has both a string and a symbol for key,
-  # keep the string value, discarding the symnbol value
+  # keep the symbol value, discarding the string value
+  #
+  # @return     [Hash] a copy of the hash where all its
+  #             keys are strings
+  #
+  def symbolize_keys
+    each_with_object({}) do |(k, v), hsh|
+      next if k.is_a?(String) && key?(k.to_sym)
+
+      hsh[k.to_sym] = v.is_a?(Hash) ? v.symbolize_keys : v
+    end
+  end
+
+  # Turn all keys into strings
+  #
+  # If the hash has both a string and a symbol for key,
+  # keep the string value, discarding the symbol value
   #
   # @return     [Hash] a copy of the hash where all its
   #             keys are strings

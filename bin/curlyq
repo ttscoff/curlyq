@@ -290,10 +290,10 @@ desc 'Extract all instances of a tag'
 arg_name 'URL', multiple: true
 command :tags do |c|
   c.desc 'Define a header to send as key=value'
-  c.flag %i[h header], multiple: true
+  c.flag %i[h header], multiple: true, arg_name: 'KEY=VAL'
 
   c.desc 'Specify a tag to collect'
-  c.flag %i[t tag], multiple: true
+  c.flag %i[t tag], multiple: true, arg_name: 'TAG'
 
   c.desc 'Expect compressed results'
   c.switch %i[c compressed]
@@ -301,11 +301,14 @@ command :tags do |c|
   c.desc 'Remove extra whitespace from results'
   c.switch %i[clean]
 
-  c.desc 'CSS/XPath query'
-  c.flag %i[q query filter]
+  c.desc 'Output the HTML source of the results'
+  c.switch %i[source html]
+
+  c.desc 'Dot syntax query to filter results'
+  c.flag %i[q query filter], arg_name: 'DOT_SYNTAX'
 
   c.desc 'Regurn an array of matches to a CSS or XPath query'
-  c.flag %i[search]
+  c.flag %i[search], arg_name: 'CSS/XPATH'
 
   c.action do |global_options, options, args|
     urls = args.join(' ').split(/[, ]+/)
@@ -322,7 +325,7 @@ command :tags do |c|
       if options[:search]
         out = res.search(options[:search])
 
-        # out = out.dot_query(options[:query]) if options[:query]
+        out = out.dot_query(options[:query]) if options[:query]
         output.push(out)
       elsif options[:query]
         query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
@@ -335,7 +338,13 @@ command :tags do |c|
       end
     end
 
-    print_out(output, global_options[:yaml], pretty: global_options[:pretty])
+    output = output[0] if output.count == 1
+
+    if options[:source]
+      puts output.to_html
+    else
+      print_out(output, global_options[:yaml], pretty: global_options[:pretty])
+    end
   end
 end
 
