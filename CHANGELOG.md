@@ -1,3 +1,11 @@
+### 0.0.7
+
+2024-01-12 17:03
+
+#### FIXED
+
+- Revert back to offering single response (no array) in cases where there are single results (for some commands)
+
 ### 0.0.6
 
 2024-01-12 14:44
