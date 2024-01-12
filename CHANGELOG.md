@@ -1,3 +1,20 @@
+### 0.0.6
+
+2024-01-12 14:44
+
+#### CHANGED
+
+- Attributes array is now a hash directly keyed to the attribute key
+
+#### NEW
+
+- Tags command has option to output only raw html of matched tags
+
+#### FIXED
+
+- --query works with --search on scrape and tags command
+- Json command dot query works now
+
 ### 0.0.5
 
 2024-01-11 18:06

@@ -10,7 +10,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [donate]: https://brettterpstra.com/donate
 
 
-The current version of `curlyq` is 0.0.5
+The current version of `curlyq` is 0.0.6
 .
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
@@ -252,10 +252,9 @@ OpenGraph images will be returned with the structure:
         "title": "CurlyQ, curl better",
         "attrs": [
           {
-            "key": "class",
-            "value": [
+            "class": [
               "aligncenter"
-            ], // all attributes included
+             ], // all attributes included
           }
         ]
       }
@@ -335,7 +334,22 @@ Returns all the links on the page, which can be queried on any attribute.
 
 Example:
 
-    curlyq images -t img -q '[width>750]' https://brettterpstra.com
+    curlyq links -q '[content*=twitter]' 'https://stackoverflow.com/questions/52428409/get-fully-rendered-html-using-selenium-webdriver-and-python'
+
+    [
+      {
+        "href": "https://twitter.com/stackoverflow",
+        "title": null,
+        "rel": null,
+        "content": "Twitter",
+        "class": [
+          "-link",
+          "js-gps-track"
+        ]
+      }
+    ]
+
+This example gets all links from the page but only returns ones with link content containing 'twitter' (`-q '[content*=twitter]'`).
 
 ```
 NAME
@@ -424,7 +438,27 @@ COMMAND OPTIONS
 
 ##### tags
 
-Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag. This command needs work on the query/search features, they don't currently work in combination.
+Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag.
+
+    curlyq tags --search '#main .post h3' -q 'attrs[id*=what]' https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/
+
+    [
+      {
+        "tag": "h3",
+        "source": "<h3 id=\"whats-next\">What???s Next</h3>",
+        "attrs": [
+          {
+            "id": "whats-next"
+          }
+        ],
+        "content": "What???s Next",
+        "tags": [
+
+        ]
+      }
+    ]
+
+The above command filters the tags based on a CSS query, then further filters them to just tags with an id containing 'what'.
 
 ```
 NAME
@@ -435,12 +469,13 @@ SYNOPSIS
     curlyq [global options] tags [command options] URL...
 
 COMMAND OPTIONS
-    -c, --[no-]compressed     - Expect compressed results
-    --[no-]clean              - Remove extra whitespace from results
-    -h, --header=arg          - Define a header to send as key=value (may be used more than once, default: none)
-    -q, --query, --filter=arg - CSS/XPath query (default: none)
-    --search=arg              - Regurn an array of matches to a CSS or XPath query (default: none)
-    -t, --tag=arg             - Specify a tag to collect (may be used more than once, default: none)
+    -c, --[no-]compressed            - Expect compressed results
+    --[no-]clean                     - Remove extra whitespace from results
+    -h, --header=KEY=VAL             - Define a header to send as key=value (may be used more than once, default: none)
+    -q, --query, --filter=DOT_SYNTAX - Dot syntax query to filter results (default: none)
+    --search=CSS/XPATH               - Regurn an array of matches to a CSS or XPath query (default: none)
+    --[no-]source, --[no-]html       - Output the HTML source of the results
+    -t, --tag=TAG                    - Specify a tag to collect (may be used more than once, default: none)
 ```
 
 
