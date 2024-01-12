@@ -144,7 +144,7 @@ command %i[html curl] do |c|
     end
     output.delete_if(&:nil?)
     output.delete_if(&:empty?)
-    output = output[0] if output.count == 1
+    # output = output[0] if output.count == 1
     output.map! { |o| o[options[:raw].to_sym] } if options[:raw]
 
     print_out(output, global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
@@ -240,7 +240,7 @@ command :json do |c|
       end
     end
 
-    output = output[0] if output.count == 1
+    # output = output[0] if output.count == 1
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
   end

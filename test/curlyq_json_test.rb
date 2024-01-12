@@ -13,9 +13,9 @@ class CurlyQJsonTest < Test::Unit::TestCase
   def setup
   end
 
-  def test_json    
+  def test_json
     result = curlyq('json', 'https://brettterpstra.com/scripts/giveaways_wrapper.cgi?v=203495&giveaway=hazel2023&action=count')
-    json = JSON.parse(result)
+    json = JSON.parse(result)[0]
 
     assert_equal(json.class, Hash, 'Single result should be a hash')
     assert_equal(286, json['json']['total'], 'json.total should match 286')
@@ -24,8 +24,8 @@ class CurlyQJsonTest < Test::Unit::TestCase
   def test_query
     result1 = curlyq('json', '-q', 'total', 'https://brettterpstra.com/scripts/giveaways_wrapper.cgi?v=203495&giveaway=hazel2023&action=count')
     result2 = curlyq('json', '-q', 'json.total', 'https://brettterpstra.com/scripts/giveaways_wrapper.cgi?v=203495&giveaway=hazel2023&action=count')
-    json1 = JSON.parse(result1)
-    json2 = JSON.parse(result2)
+    json1 = JSON.parse(result1)[0]
+    json2 = JSON.parse(result2)[0]
 
     assert_equal(286, json1, 'Should be 286')
     assert_equal(286, json2, 'Including json in dot path should yeild same result')

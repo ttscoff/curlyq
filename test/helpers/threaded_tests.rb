@@ -132,7 +132,7 @@ class ThreadedTests
 
     unless status.success? && !count['fails'].to_i.positive? && !count['errs'].to_i.positive?
       s[2] = if count
-               ": #{paste.red(count['fails'])} #{pastel.red('failures')}, #{pastel.red(count['errs'])} #{pastel.red('errors')}"
+               ": #{pastel.red(count['fails'])} #{pastel.red('failures')}, #{pastel.red(count['errs'])} #{pastel.red('errors')}"
              else
                ": #{pastel.red('Unknown Error')}"
              end
