@@ -302,7 +302,10 @@ command :tags do |c|
   c.switch %i[clean]
 
   c.desc 'CSS/XPath query'
-  c.flag %i[q query search]
+  c.flag %i[q query filter]
+
+  c.desc 'Regurn an array of matches to a CSS or XPath query'
+  c.flag %i[search]
 
   c.action do |global_options, options, args|
     urls = args.join(' ').split(/[, ]+/)
@@ -314,9 +317,17 @@ command :tags do |c|
       res = Curl::Html.new(url, { headers: headers, headers_only: options[:headers],
                                   compressed: options[:compressed], clean: options[:clean] })
       res.curl
+
       output = []
       if options[:search]
-        output = res.tags.search(options[:search])
+        out = res.search(options[:search])
+
+        # out = out.dot_query(options[:query]) if options[:query]
+        output.push(out)
+      elsif options[:query]
+        query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
+
+        output = res.to_data.dot_query(query)
       elsif tags.count.positive?
         tags.each { |tag| output.concat(res.tags(tag)) }
       else

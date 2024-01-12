@@ -1,3 +1,22 @@
+### 0.0.5
+
+2024-01-11 18:06
+
+#### IMPROVED
+
+- Add --query capabilities to images command
+- Add --query to links command
+- Allow hyphens in query syntax
+- Allow any character other than comma, ampersand, or right square bracket in query value
+
+#### FIXED
+
+- Html --search returns a full Curl::Html object
+- --query works better with --search and is consistent with other query functions
+- Scrape command outputting malformed data
+- Hash output when --query is used with scrape
+- Nil match on tags command
+
 ### 0.0.4
 
 2024-01-10 13:54
