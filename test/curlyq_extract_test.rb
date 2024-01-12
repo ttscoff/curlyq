@@ -7,7 +7,7 @@ require 'helpers/curlyq-helpers'
 require 'test_helper'
 
 # Tests for tags command
-class CurlyTagsTest < Test::Unit::TestCase
+class CurlyQTagsTest < Test::Unit::TestCase
   include CurlyQHelpers
 
   def setup
