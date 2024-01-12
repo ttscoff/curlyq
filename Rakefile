@@ -1,8 +1,12 @@
 require 'rake/clean'
+require 'rake/testtask'
 require 'rubygems'
 require 'rubygems/package_task'
 require 'rdoc/task'
 require 'yard'
+require 'parallel_tests'
+require 'parallel_tests/tasks'
+require 'tty-spinner'
 
 YARD::Rake::YardocTask.new do |t|
  t.files = ['lib/curly/*.rb']
@@ -22,10 +26,34 @@ spec = eval(File.read('curlyq.gemspec'))
 
 Gem::PackageTask.new(spec) do |pkg|
 end
-require 'rake/testtask'
-Rake::TestTask.new do |t|
-  t.libs << "test"
-  t.test_files = FileList['test/*_test.rb']
+
+namespace :test do
+  FileList['test/*_test.rb'].each do |rakefile|
+    test_name = File.basename(rakefile, '.rb').sub(/^.*?_(.*?)_.*?$/, '\1')
+
+    Rake::TestTask.new(:"#{test_name}") do |t|
+      t.libs << ['test', 'test/helpers']
+      t.pattern = rakefile
+      t.verbose = ENV['VERBOSE'] =~ /(true|1)/i ? true : false
+    end
+    # Define default task for :test
+    task default: test_name
+  end
+end
+
+desc 'Run one test verbosely'
+task :test_one, :test do |_, args|
+  args.with_defaults(test: '*')
+  puts `bundle exec rake test TESTOPTS="-v" TEST="test/curlyq_#{args[:test]}_test.rb"`
+end
+
+desc 'Run all tests, threaded'
+task :test, :pattern, :threads, :max_tests do |_, args|
+  args.with_defaults(pattern: '*', threads: 8, max_tests: 0)
+  pattern = args[:pattern] =~ /(n[iu]ll?|0|\.)/i ? '*' : args[:pattern]
+
+  require_relative 'test/helpers/threaded_tests'
+  ThreadedTests.new.run(pattern: pattern, max_threads: args[:threads].to_i, max_tests: args[:max_tests])
 end
 
 desc 'Development version check'

@@ -62,6 +62,7 @@ class ::Hash
       pth.sub!(/\[\]/, '')
 
       res = res[0] if res.is_a?(Array)
+
       return false if el.nil? && ats.empty? && !res.key?(pth)
 
       res = res[pth] unless pth.empty?

@@ -16,10 +16,14 @@ spec = Gem::Specification.new do |s|
   s.rdoc_options << '--title' << 'curlyq' << '--main' << 'README.rdoc' << '-ri'
   s.bindir = 'bin'
   s.executables << 'curlyq'
-  s.add_development_dependency('rake','~> 0.9.2')
-  s.add_development_dependency('rdoc', '~> 4.3')
-  s.add_development_dependency('minitest', '~> 5.14')
+  s.add_development_dependency('rake','~> 13.0', '>= 13.0.1')
+  s.add_development_dependency('rdoc', '~> 6.3.1')
+  s.add_development_dependency('test-unit', '~> 3.4.4')
   s.add_development_dependency('yard', '~> 0.9', '>= 0.9.26')
+  s.add_development_dependency('tty-spinner', '~> 0.9', '>= 0.9.3')
+  s.add_development_dependency('tty-progressbar', '~> 0.18', '>= 0.18.2')
+  s.add_development_dependency('pastel', '~> 0.8.0')
+  s.add_development_dependency('parallel_tests', '~> 3.7', '>= 3.7.3')
   s.add_runtime_dependency('gli','~> 2.21.0')
   s.add_runtime_dependency('tty-which','~> 0.5.0')
   s.add_runtime_dependency('nokogiri','~> 1.16.0')

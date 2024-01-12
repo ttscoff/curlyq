@@ -222,11 +222,25 @@ command :json do |c|
           headers: res.headers
         })
       else
-        json = json.dot_query(options[:query]) if options[:query]
+        if options[:query]
+          if options[:query] =~ /^json$/
+            res = json
+          elsif options[:query] =~ /^json\./
+            query = options[:query].sub(/^json\./, '')
+          else
+            query = options[:query]
+          end
 
-        output.push(json)
+          res = json.dot_query(query)
+        else
+          res = res.to_data
+        end
+
+        output.push(res)
       end
     end
+
+    output = output[0] if output.count == 1
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
   end
