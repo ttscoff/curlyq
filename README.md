@@ -44,7 +44,7 @@ SYNOPSIS
     curlyq [global options] command [command options] [arguments...]
 
 VERSION
-    0.0.5
+    0.0.6
 
 GLOBAL OPTIONS
     --help          - Show this message
@@ -424,7 +424,7 @@ COMMAND OPTIONS
 
 ##### tags
 
-Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag.
+Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag. This command needs work on the query/search features, they don't currently work in combination.
 
 ```
 NAME

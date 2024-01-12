@@ -10,7 +10,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [donate]: https://brettterpstra.com/donate
 <!--END GITHUB-->
 
-The current version of `curlyq` is <!--VER-->0.0.4<!--END VER-->.
+The current version of `curlyq` is <!--VER-->0.0.5<!--END VER-->.
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
 
@@ -298,7 +298,7 @@ Example:
 
 ##### tags
 
-Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag.
+Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag. This command needs work on the query/search features, they don't currently work in combination.
 
 ```
 @cli(bundle exec bin/curlyq help tags)
