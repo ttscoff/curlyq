@@ -44,7 +44,7 @@ SYNOPSIS
     curlyq [global options] command [command options] [arguments...]
 
 VERSION
-    0.0.7
+    0.0.8
 
 GLOBAL OPTIONS
     --help          - Show this message
