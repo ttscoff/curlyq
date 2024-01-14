@@ -29,6 +29,9 @@ class ::Hash
     end
   end
 
+  # TODO: Allow dot queries to ouput only a selected key
+  # TODO: Allow use of empty [] to enumerate every element in an array
+
   # Extract data using a dot-syntax path
   #
   # @param      path  [String] The path
@@ -38,11 +41,16 @@ class ::Hash
   def dot_query(path)
     res = stringify_keys
 
+    enumerate = false
     out = []
     q = path.split(/(?<![\d.])\./)
-    q.each do |pth|
-      el = Regexp.last_match(1) if pth =~ /\[([0-9,.]+)\]/
-      pth.sub!(/\[([0-9,.]+)\]/, '')
+
+    while q.count.positive?
+      pth = q.shift
+
+      el = Regexp.last_match(1) if pth =~ /\[([0-9,.]+)?\]/
+      pth.sub!(/\[([0-9,.]+)?\]/, '')
+
       ats = []
       at = []
       while pth =~ /\[[+&,]?\w+ *[\^*$=<>]=? *\w+/
@@ -61,9 +69,25 @@ class ::Hash
       ats.push(at) unless at.empty?
       pth.sub!(/\[\]/, '')
 
-      res = res[0] if res.is_a?(Array)
+      res = res[0] if res.is_a?(Array) && res.count == 1
 
-      return false if el.nil? && ats.empty? && !res.key?(pth)
+      if ats.empty? && el.nil? && res.is_a?(Array) && res[0]&.key?(pth)
+        res.map! { |r| r[pth] }
+        next
+      end
+
+      res.map!(&:stringify_keys) if res.is_a?(Array) && res[0].is_a?(Hash)
+
+      if res.is_a?(String) || (res.is_a?(Array) && res[0].is_a?(String))
+        out.push(res)
+        next
+      end
+
+      if res.is_a?(Array) && !pth.nil?
+        return res.delete_if { |r| !r.key?(pth) }
+      else
+        return false if el.nil? && ats.empty? && res.is_a?(Hash) && (res.nil? || !res.key?(pth))
+      end
 
       res = res[pth] unless pth.empty?
 
@@ -83,7 +107,16 @@ class ::Hash
         out = res
       end
 
-      out = out[eval(el)] if out.is_a?(Array) && el =~ /^[\d.,]+$/
+      if el.nil? && out.is_a?(Array) && out[0].is_a?(Hash)
+        out.map! { |o|
+          o.stringify_keys!
+          o.key?(pth) ? o[pth] : o
+        }
+      elsif out.is_a?(Array) && el =~ /^[\d.,]+$/
+        out = out[eval(el)]
+      end
+
+      res = out
     end
 
     out
@@ -250,5 +283,9 @@ class ::Hash
 
       hsh[k.to_s] = v.is_a?(Hash) ? v.stringify_keys : v
     end
+  end
+
+  def stringify_keys!
+    replace stringify_keys
   end
 end

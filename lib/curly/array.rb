@@ -74,14 +74,15 @@ class ::Array
   ## @return [Array] elements matching dot query
   ##
   def dot_query(path)
-    filter! do |tag|
+    delete_if do |tag|
       r = tag.dot_query(path)
       if r.is_a?(Array)
-        r.count.positive?
+        r.count.zero?
       else
-        r
+        !r
       end
     end
+    # delete_if(&:nil?)
 
     return self
   end
