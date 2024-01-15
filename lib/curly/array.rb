@@ -74,21 +74,19 @@ class ::Array
   ## @return [Array] elements matching dot query
   ##
   def dot_query(path)
-    delete_if do |tag|
-      r = tag.dot_query(path)
-      if r.is_a?(Array)
-        r.count.zero?
-      else
-        !r
-      end
-    end
-    # delete_if(&:nil?)
+    res = map { |el| el.dot_query(path) }
+    res.delete_if { |r| !r }
+    res.delete_if(&:empty?)
+    res
+  end
 
-    return self
+  def get_value(path)
+    res = map { |el| el.get_value(path) }
+    res.is_a?(Array) && res.count == 1 ? res[0] : res
   end
 
   def to_html
-    map { |el| el.to_html }
+    map(&:to_html)
   end
 
   ##

@@ -29,8 +29,13 @@ class ::Hash
     end
   end
 
-  # TODO: Allow dot queries to ouput only a selected key
-  # TODO: Allow use of empty [] to enumerate every element in an array
+  def get_value(query)
+    return nil if self.empty?
+    query.split('.').inject(self) do |v, k|
+      k = k.to_i if v.is_a? Array
+      v.fetch(k)
+    end
+  end
 
   # Extract data using a dot-syntax path
   #
@@ -41,6 +46,10 @@ class ::Hash
   def dot_query(path)
     res = stringify_keys
 
+    unless path =~ /\[/
+      return res.get_value(path)
+    end
+
     enumerate = false
     out = []
     q = path.split(/(?<![\d.])\./)
@@ -48,13 +57,18 @@ class ::Hash
     while q.count.positive?
       pth = q.shift
 
+      unless pth =~ /\[/
+        return res.get_value(pth)
+      end
+
       el = Regexp.last_match(1) if pth =~ /\[([0-9,.]+)?\]/
       pth.sub!(/\[([0-9,.]+)?\]/, '')
 
       ats = []
       at = []
-      while pth =~ /\[[+&,]?\w+ *[\^*$=<>]=? *\w+/
-        m = pth.match(/\[(?<com>[,+&])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+) */)
+      while pth =~ /\[[+&,]?\w+( *[\^*$=<>]=? *\w+)?/
+        m = pth.match(/\[(?<com>[,+&])? *(?<key>\w+)( *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+))? */)
+
         comp = [m['key'], m['op'], m['val']]
         case m['com']
         when ','
@@ -64,7 +78,7 @@ class ::Hash
           at.push(comp)
         end
 
-        pth.sub!(/\[(?<com>[,&+])? *(?<key>\w+) *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+)/, '[')
+        pth.sub!(/\[(?<com>[,&+])? *(?<key>\w+)( *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+))?/, '[')
       end
       ats.push(at) unless at.empty?
       pth.sub!(/\[\]/, '')
@@ -78,17 +92,17 @@ class ::Hash
 
       res.map!(&:stringify_keys) if res.is_a?(Array) && res[0].is_a?(Hash)
 
-      if res.is_a?(String) || (res.is_a?(Array) && res[0].is_a?(String))
-        out.push(res)
-        next
-      end
+      # if res.is_a?(String) || (res.is_a?(Array) && res[0].is_a?(String))
+      #   out.push(res)
+      #   next
+      # end
 
-      if res.is_a?(Array) && !pth.nil?
-        return res.delete_if { |r| !r.key?(pth) }
-      else
-        return false if el.nil? && ats.empty? && res.is_a?(Hash) && (res.nil? || !res.key?(pth))
-      end
-
+      # if res.is_a?(Array) && !pth.nil?
+      #   return res.delete_if { |r| !r.key?(pth) }
+      # else
+      #   return false if el.nil? && ats.empty? && res.is_a?(Hash) && (res.nil? || !res.key?(pth))
+      # end
+      tag = res
       res = res[pth] unless pth.empty?
 
       return false if res.nil?
@@ -97,20 +111,19 @@ class ::Hash
         while ats.count.positive?
           atr = ats.shift
           res = [res] if res.is_a?(Hash)
-          keepers = res.filter do |r|
-            evaluate_comp(r, atr)
-          end
 
-          out.concat(keepers)
+          res.each do |r|
+            out.push(tag) if evaluate_comp(r, atr)
+          end
         end
       else
-        out = res
+        out = tag
       end
 
       if el.nil? && out.is_a?(Array) && out[0].is_a?(Hash)
         out.map! { |o|
-          o.stringify_keys!
-          o.key?(pth) ? o[pth] : o
+          o.stringify_keys
+          # o.key?(pth) ? o[pth] : o
         }
       elsif out.is_a?(Array) && el =~ /^[\d.,]+$/
         out = out[eval(el)]
@@ -119,7 +132,7 @@ class ::Hash
       res = out
     end
 
-    out
+    out.get_value(path.gsub(/\[.*?\]/, ''))
   end
 
   ##
@@ -145,6 +158,8 @@ class ::Hash
             else
               a[2]
             end
+
+      return r.key?(key) && !r[key].nil? && !r[key].empty? if val.nil?
 
       if !r.key?(key)
         keep = false
