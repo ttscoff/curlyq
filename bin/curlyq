@@ -147,6 +147,12 @@ command %i[html curl] do |c|
     # output = output[0] if output.count == 1
     output.map! { |o| o[options[:raw].to_sym] } if options[:raw]
 
+    if output.is_a?(Array)
+      while output.length == 1
+        output = output[0]
+      end
+    end
+
     print_out(output, global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
   end
 end
@@ -342,9 +348,7 @@ command :tags do |c|
         out = out.dot_query(options[:query]) if options[:query]
         output.push(out)
       elsif options[:query]
-        query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
-
-        output = res.to_data.dot_query(query)
+        output = res.to_data.dot_query(options[:query])
       elsif tags.count.positive?
         tags.each { |tag| output.concat(res.tags(tag)) }
       else
@@ -393,13 +397,13 @@ command :images do |c|
       res.curl
 
       res = res.images(types: types)
+      res = { images: res }.dot_query(options[:query], 'images', full_tag: false) if options[:query]
 
-      if options[:query]
-        query = options[:query] =~ /^images/ ? options[:query] : "images#{options[:query]}"
-        res = { images: res }.dot_query(query)
+      if res.is_a?(Array)
+        output.concat(res)
+      else
+        output.push(res)
       end
-
-      output.concat(res)
     end
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
@@ -439,8 +443,7 @@ command :links do |c|
       res.curl
 
       if options[:query]
-        query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
-        queried = res.to_data.dot_query(query)
+        queried = res.to_data.dot_query(options[:query], 'links', full_tag: false)
 
         queried.is_a?(Array) ? output.concat(queried) : output.push(queried) if queried
       else
@@ -470,9 +473,8 @@ command :headlinks do |c|
       res.curl
 
       if options[:query]
-        query = options[:query] =~ /^links/ ? options[:query] : "links#{options[:query]}"
-        queried = { links: res.to_data[:meta_links] }.dot_query(query)
-        output.concat(queried) if queried
+        queried = { links: res.to_data[:meta_links] }.dot_query(options[:query], 'links', full_tag: false)
+        output.push(queried) if queried
       else
         output.push(res.to_data[:meta_links])
       end
@@ -517,10 +519,10 @@ command :scrape do |c|
       if options[:search]
         out = res.search(options[:search])
 
-        out = out.dot_query(options[:query]) if options[:query]
+        out = out.dot_query(options[:query], full_tag: false) if options[:query]
         output.push(out)
       elsif options[:query]
-        queried = res.to_data(url: url).dot_query(options[:query])
+        queried = res.to_data(url: url).dot_query(options[:query], full_tag: false)
         output.push(queried) if queried
       else
         output.push(res.to_data(url: url))

@@ -33,6 +33,7 @@ class ::Hash
     return nil if self.empty?
     query.split('.').inject(self) do |v, k|
       k = k.to_i if v.is_a? Array
+      next unless v.key?(k)
       v.fetch(k)
     end
   end
@@ -43,8 +44,9 @@ class ::Hash
   #
   # @return     Result of path query
   #
-  def dot_query(path)
+  def dot_query(path, root = nil, full_tag: true)
     res = stringify_keys
+    res = res[root] unless root.nil?
 
     unless path =~ /\[/
       return res.get_value(path)
@@ -56,6 +58,8 @@ class ::Hash
 
     while q.count.positive?
       pth = q.shift
+
+      return nil if res.nil?
 
       unless pth =~ /\[/
         return res.get_value(pth)
@@ -84,14 +88,12 @@ class ::Hash
       pth.sub!(/\[\]/, '')
 
       res = res[0] if res.is_a?(Array) && res.count == 1
-
       if ats.empty? && el.nil? && res.is_a?(Array) && res[0]&.key?(pth)
         res.map! { |r| r[pth] }
         next
       end
 
       res.map!(&:stringify_keys) if res.is_a?(Array) && res[0].is_a?(Hash)
-
       # if res.is_a?(String) || (res.is_a?(Array) && res[0].is_a?(String))
       #   out.push(res)
       #   next
@@ -103,22 +105,25 @@ class ::Hash
       #   return false if el.nil? && ats.empty? && res.is_a?(Hash) && (res.nil? || !res.key?(pth))
       # end
       tag = res
-      res = res[pth] unless pth.empty?
+      res = res[pth] unless pth.nil? || pth.empty?
+
+      pth = ''
 
       return false if res.nil?
-
       if ats.count.positive?
         while ats.count.positive?
           atr = ats.shift
           res = [res] if res.is_a?(Hash)
 
           res.each do |r|
-            out.push(tag) if evaluate_comp(r, atr)
+            out.push(full_tag ? tag : r) if evaluate_comp(r, atr)
           end
         end
       else
-        out = tag
+        out = res
       end
+
+      out = out.get_value(pth) unless pth.nil?
 
       if el.nil? && out.is_a?(Array) && out[0].is_a?(Hash)
         out.map! { |o|
@@ -128,11 +133,11 @@ class ::Hash
       elsif out.is_a?(Array) && el =~ /^[\d.,]+$/
         out = out[eval(el)]
       end
-
       res = out
     end
 
-    out.get_value(path.gsub(/\[.*?\]/, ''))
+    out = out[0] if out&.count == 1
+    out
   end
 
   ##
@@ -158,6 +163,7 @@ class ::Hash
             else
               a[2]
             end
+      r = r.get_value(key.to_s) if key.to_s =~ /\./
 
       return r.key?(key) && !r[key].nil? && !r[key].empty? if val.nil?
 
