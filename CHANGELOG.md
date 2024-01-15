@@ -1,3 +1,13 @@
+### 0.0.8
+
+2024-01-15 16:45
+
+#### IMPROVED
+
+- Dot syntax query can now operate on a full array using empty set []
+- Dot syntax query should output a specific key, e.g. attrs[id*=news].content (work in progress)
+- Dot query syntax handling touch-ups. Piping to jq is still more flexible, but the basics are there.
+
 ### 0.0.7
 
 2024-01-12 17:03

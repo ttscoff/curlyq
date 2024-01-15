@@ -10,7 +10,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [donate]: https://brettterpstra.com/donate
 
 
-The current version of `curlyq` is 0.0.7
+The current version of `curlyq` is 0.0.8
 .
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
