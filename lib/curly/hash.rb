@@ -31,9 +31,13 @@ class ::Hash
 
   def get_value(query)
     return nil if self.empty?
+    stringify_keys!
+
     query.split('.').inject(self) do |v, k|
       k = k.to_i if v.is_a? Array
+
       next unless v.key?(k)
+
       v.fetch(k)
     end
   end
@@ -52,12 +56,18 @@ class ::Hash
       return res.get_value(path)
     end
 
+    path.gsub!(/\[(.*?)\]/) do
+      inter = Regexp.last_match(1).gsub(/\./, '%')
+      "[#{inter}]"
+    end
+
     enumerate = false
     out = []
     q = path.split(/(?<![\d.])\./)
 
     while q.count.positive?
       pth = q.shift
+      pth.gsub!(/%/, '.')
 
       return nil if res.nil?
 
@@ -70,8 +80,8 @@ class ::Hash
 
       ats = []
       at = []
-      while pth =~ /\[[+&,]?\w+( *[\^*$=<>]=? *\w+)?/
-        m = pth.match(/\[(?<com>[,+&])? *(?<key>\w+)( *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+))? */)
+      while pth =~ /\[[+&,]?[\w.]+( *[\^*$=<>]=? *\w+)?/
+        m = pth.match(/\[(?<com>[,+&])? *(?<key>[\w.]+)( *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+))? */)
 
         comp = [m['key'], m['op'], m['val']]
         case m['com']
@@ -82,7 +92,7 @@ class ::Hash
           at.push(comp)
         end
 
-        pth.sub!(/\[(?<com>[,&+])? *(?<key>\w+)( *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+))?/, '[')
+        pth.sub!(/\[(?<com>[,&+])? *(?<key>[\w.]+)( *(?<op>[\^*$=<>]{1,2}) *(?<val>[^,&\]]+))?/, '[')
       end
       ats.push(at) unless at.empty?
       pth.sub!(/\[\]/, '')
@@ -167,10 +177,10 @@ class ::Hash
 
       return r.key?(key) && !r[key].nil? && !r[key].empty? if val.nil?
 
-      if !r.key?(key)
+      if r.nil?
         keep = false
-      elsif r[key].is_a?(Array)
-        valid = r[key].filter do |k|
+      elsif r.is_a?(Array)
+        valid = r.filter do |k|
           case a[1]
           when /^\^/
             k =~ /^#{a[2]}/i ? true : false
@@ -185,19 +195,19 @@ class ::Hash
 
         keep = valid.count.positive?
       elsif val.is_a?(Numeric) && a[1] =~ /^[<>=]{1,2}$/
-        k = r[key].to_i
+        k = r.to_i
         comp = a[1] =~ /^=$/ ? '==' : a[1]
         keep = eval("#{k}#{comp}#{val}")
       else
         keep = case a[1]
                when /^\^/
-                 r[key] =~ /^#{a[2]}/i ? true : false
+                 r =~ /^#{a[2]}/i ? true : false
                when /^\$/
-                 r[key] =~ /#{a[2]}$/i ? true : false
+                 r =~ /#{a[2]}$/i ? true : false
                when /^\*/
-                 r[key] =~ /#{a[2]}/i ? true : false
+                 r =~ /#{a[2]}/i ? true : false
                else
-                 r[key] =~ /^#{a[2]}$/i ? true : false
+                 r =~ /^#{a[2]}$/i ? true : false
                end
       end
 
