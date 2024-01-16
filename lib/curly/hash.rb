@@ -195,7 +195,11 @@ class ::Hash
             end
       r = r.get_value(key.to_s) if key.to_s =~ /\./
 
-      return r.key?(key) && !r[key].nil? && !r[key].empty? if val.nil?
+      if r.is_a?(Hash)
+        return r.key?(key) && !r[key].nil? && !r[key].empty? if val.nil?
+      elsif r.is_a?(String) && val.nil?
+        return r.nil? ? false : true
+      end
 
       if r.nil?
         keep = false

@@ -356,7 +356,9 @@ command :tags do |c|
       end
     end
 
-    output = output[0] if output.count == 1
+    while output.is_a?(Array) && output.count == 1
+      output = output[0]
+    end
 
     if options[:source]
       puts output.to_html
