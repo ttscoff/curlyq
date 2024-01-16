@@ -34,8 +34,10 @@ class ::Hash
     stringify_keys!
 
     query.split('.').inject(self) do |v, k|
-      k = k.to_i if v.is_a? Array
-
+      if v.is_a? Array
+        return v.map { |el| el.get_value(k) }
+      end
+      # k = k.to_i if v.is_a? Array
       next unless v.key?(k)
 
       v.fetch(k)
@@ -120,11 +122,11 @@ class ::Hash
       pth = ''
 
       return false if res.nil?
+
       if ats.count.positive?
         while ats.count.positive?
           atr = ats.shift
           res = [res] if res.is_a?(Hash)
-
           res.each do |r|
             out.push(full_tag ? tag : r) if evaluate_comp(r, atr)
           end
@@ -148,6 +150,24 @@ class ::Hash
 
     out = out[0] if out&.count == 1
     out
+  end
+
+  def array_match(array, key, comp)
+    keep = false
+    array.each do |el|
+      keep = case comp
+             when /^\^/
+               key =~ /^#{el}/i ? true : false
+             when /^\$/
+               key =~ /#{el}$/i ? true : false
+             when /^\*/
+               key =~ /#{el}/i ? true : false
+             else
+               key =~ /^#{el}$/i ? true : false
+             end
+      break if keep
+    end
+    keep
   end
 
   ##
@@ -181,15 +201,19 @@ class ::Hash
         keep = false
       elsif r.is_a?(Array)
         valid = r.filter do |k|
-          case a[1]
-          when /^\^/
-            k =~ /^#{a[2]}/i ? true : false
-          when /^\$/
-            k =~ /#{a[2]}$/i ? true : false
-          when /^\*/
-            k =~ /#{a[2]}/i ? true : false
+          if k.is_a? Array
+            array_match(k, a[2], a[1])
           else
-            k =~ /^#{a[2]}$/i ? true : false
+            case a[1]
+            when /^\^/
+              k =~ /^#{a[2]}/i ? true : false
+            when /^\$/
+              k =~ /#{a[2]}$/i ? true : false
+            when /^\*/
+              k =~ /#{a[2]}/i ? true : false
+            else
+              k =~ /^#{a[2]}$/i ? true : false
+            end
           end
         end
 
@@ -199,16 +223,21 @@ class ::Hash
         comp = a[1] =~ /^=$/ ? '==' : a[1]
         keep = eval("#{k}#{comp}#{val}")
       else
-        keep = case a[1]
-               when /^\^/
-                 r =~ /^#{a[2]}/i ? true : false
-               when /^\$/
-                 r =~ /#{a[2]}$/i ? true : false
-               when /^\*/
-                 r =~ /#{a[2]}/i ? true : false
-               else
-                 r =~ /^#{a[2]}$/i ? true : false
-               end
+        v = r.is_a?(Hash) ? r[key] : r
+        if v.is_a? Array
+          keep = array_match(v, a[2], a[1])
+        else
+          keep = case a[1]
+                 when /^\^/
+                   v =~ /^#{a[2]}/i ? true : false
+                 when /^\$/
+                   v =~ /#{a[2]}$/i ? true : false
+                 when /^\*/
+                   v =~ /#{a[2]}/i ? true : false
+                 else
+                   v =~ /^#{a[2]}$/i ? true : false
+                 end
+        end
       end
 
       return false unless keep

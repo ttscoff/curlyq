@@ -81,8 +81,7 @@ class ::Array
   end
 
   def get_value(path)
-    res = map { |el| el.get_value(path) }
-    res.is_a?(Array) && res.count == 1 ? res[0] : res
+    map { |el| el.get_value(path) }
   end
 
   def to_html

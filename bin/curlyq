@@ -130,13 +130,13 @@ command %i[html curl] do |c|
         out = res.parse(source)
 
         if options[:query]
-          out = out.to_data(url: url, clean: options[:clean]).dot_query(options[:query])
+          out = out.to_data(url: url, clean: options[:clean]).dot_query(options[:query], full_tag: false)
         else
           out = out.to_data
         end
         output.push([out])
       elsif options[:query]
-        queried = res.to_data.dot_query(options[:query])
+        queried = res.to_data.dot_query(options[:query], full_tag: false)
         output.push(queried) if queried
       else
         output.push(res.to_data(url: url))
