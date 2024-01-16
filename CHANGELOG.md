@@ -1,3 +1,13 @@
+### 0.0.9
+
+2024-01-16 12:38
+
+#### IMPROVED
+
+- You can now use dot syntax inside of a square bracket comparison in --query (`[attrs.id*=what]`)
+- *=, ^=, $=, and == work with array values
+- [] comparisons with no comparison, e.g. [attrs.id], will return every match that has that element populated
+
 ### 0.0.8
 
 2024-01-15 16:45

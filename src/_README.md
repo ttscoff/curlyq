@@ -10,9 +10,12 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [donate]: https://brettterpstra.com/donate
 <!--END GITHUB-->
 
-The current version of `curlyq` is <!--VER-->0.0.8<!--END VER-->.
+[jq]: https://github.com/jqlang/jq "Command-line JSON processor"
+[yq]: https://github.com/mikefarah/yq "yq is a portable command-line YAML, JSON, XML, CSV, TOML and properties processor"
 
-CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like `jq` to parse the output.
+The current version of `curlyq` is <!--VER-->0.0.4<!--END VER-->.
+
+CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like [jq] to parse the output.
 
 [github]: https://github.com/ttscoff/curlyq/
 
@@ -45,6 +48,9 @@ You can shape the results using `--search` (`-s`) and `--query` (`-q`) on some c
 
 A search uses either CSS or XPath syntax to locate elements. For example, if you wanted to locate all of the `<article>` elements with a class of `post` inside of the div with an id of `main`, you would run `--search '#main article.post'`. Searches can target tags, ids, and classes, and can accept `>` to target direct descendents. You can also use XPaths, but I hate those so I'm not going to document them.
 
+> I've tried to make the query function useful, but if you want to do any kind of advanced shaping, you're better off piping the JSON output to [jq] or [yq].
+<!--JEKYLL{:.warn}-->
+
 Queries are specifically for shaping CurlyQ output. If you're using the `html` command, it returns a key called `images`, so you can target just the images in the response with `-q 'images'`. The queries accept array syntax, so to get the first image, you would use `-q 'images[0]'`. Ranges are accepted as well, so `-q 'images[1..4]'` will return the 2nd through 5th images found on the page. You can also do comparisons, e.g. `images[rel=me]'` to target only images with a `rel` attribute of `me`.
 
 The comparisons for the query flag are:
@@ -57,6 +63,16 @@ The comparisons for the query flag are:
 - `*=` contains text
 - `^=` starts with text
 - `$=` ends with text
+
+Comparisons can be numeric or string comparisons. A numeric comparison like `curlyq images -q '[width>500]' URL` would return all of the images on the page with a width attribute greater than 500.
+
+You can also use dot syntax inside of comparisons, e.g. `[links.rel*=me]` to target the links object (`html` command), and return only the links with a `rel=me` attribute. If the comparison is to an array object (like `class` or `rel`), it will match if any of the elements of the array match your comparison.
+
+If you end the query with a specific key, only that key will be output. If there's only one match, it will be output as a raw string. If there are multiple matches, output will be an array:
+
+    curlyq tags --search '#main .post h3' -q '[attrs.id*=what].source' 'https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/'
+    
+    <h3 id="whats-next">What’s Next</h3>
 
 #### Commands
 
@@ -314,7 +330,7 @@ Example:
 
 Return a hierarchy of all tags in a page. Use `-t` to limit to a specific tag.
 
-    curlyq tags --search '#main .post h3' -q 'attrs[id*=what]' https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/
+    curlyq tags --search '#main .post h3' -q '[attrs.id*=what]' https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/
 
     [
       {
