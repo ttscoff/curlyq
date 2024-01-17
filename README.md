@@ -47,7 +47,7 @@ SYNOPSIS
     curlyq [global options] command [command options] [arguments...]
 
 VERSION
-    0.0.10
+    0.0.11
 
 GLOBAL OPTIONS
     --help          - Show this message
@@ -94,11 +94,13 @@ Comparisons can be numeric or string comparisons. A numeric comparison like `cur
 
 You can also use dot syntax inside of comparisons, e.g. `[links.rel*=me]` to target the links object (`html` command), and return only the links with a `rel=me` attribute. If the comparison is to an array object (like `class` or `rel`), it will match if any of the elements of the array match your comparison.
 
-If you end the query with a specific key, only that key will be output. If there's only one match, it will be output as a raw string. If there are multiple matches, output will be an array:
+If you end the query with a specific key, only that key will be output, but it will be in an array. If there's only one match, it will be output as a raw string as a single element in an array.
 
     curlyq tags --search '#main .post h3' -q '[attrs.id*=what].source' 'https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/'
     
-    <h3 id="whats-next">What???s Next</h3>
+    [
+      "<h3 id=\"whats-next\">What???s Next</h3>"
+    ]
 
 #### Commands
 

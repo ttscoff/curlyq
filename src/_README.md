@@ -13,7 +13,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [jq]: https://github.com/jqlang/jq "Command-line JSON processor"
 [yq]: https://github.com/mikefarah/yq "yq is a portable command-line YAML, JSON, XML, CSV, TOML and properties processor"
 
-The current version of `curlyq` is <!--VER-->0.0.9<!--END VER-->.
+The current version of `curlyq` is <!--VER-->0.0.10<!--END VER-->.
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like [jq] to parse the output.
 
@@ -68,11 +68,13 @@ Comparisons can be numeric or string comparisons. A numeric comparison like `cur
 
 You can also use dot syntax inside of comparisons, e.g. `[links.rel*=me]` to target the links object (`html` command), and return only the links with a `rel=me` attribute. If the comparison is to an array object (like `class` or `rel`), it will match if any of the elements of the array match your comparison.
 
-If you end the query with a specific key, only that key will be output. If there's only one match, it will be output as a raw string. If there are multiple matches, output will be an array:
+If you end the query with a specific key, only that key will be output, but it will be in an array. If there's only one match, it will be output as a raw string as a single element in an array.
 
     curlyq tags --search '#main .post h3' -q '[attrs.id*=what].source' 'https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/'
     
-    <h3 id="whats-next">What’s Next</h3>
+    [
+      "<h3 id=\"whats-next\">What’s Next</h3>"
+    ]
 
 #### Commands
 
