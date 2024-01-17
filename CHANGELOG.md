@@ -1,3 +1,13 @@
+### 0.0.10
+
+2024-01-17 13:50
+
+#### IMPROVED
+
+- Update YARD documentation
+- Breaking change, ensure all return types are Arrays, even with single objects, to aid in scriptability
+- Screenshot test suite
+
 ### 0.0.9
 
 2024-01-16 12:38
