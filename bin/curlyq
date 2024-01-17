@@ -359,6 +359,7 @@ command :tags do |c|
     while output.is_a?(Array) && output.count == 1
       output = output[0]
     end
+    output = output.ensure_array
 
     if options[:source]
       puts output.to_html
@@ -482,7 +483,10 @@ command :headlinks do |c|
       end
     end
 
-    output = output[0] if output.count == 1
+    while output.is_a?(Array) && output.count == 1
+      output = output[0]
+    end
+    output = output.ensure_array
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
   end
@@ -533,7 +537,10 @@ command :scrape do |c|
 
     output.delete_if(&:empty?)
 
-    output = output[0] if output.count == 1
+    while output.is_a?(Array) && output.count == 1
+      output = output[0]
+    end
+    output = output.ensure_array
 
     if options[:raw]
       output.map! { |o| o[options[:raw].to_sym] }

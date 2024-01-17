@@ -1,5 +1,6 @@
 require 'open3'
 require 'time'
+require 'fileutils'
 $LOAD_PATH.unshift File.join(__dir__, '..', '..', 'lib')
 require 'curly'
 

@@ -169,4 +169,13 @@ class ::Array
       keep
     end
   end
+
+  ##
+  ## Ensure that an object is an array
+  ##
+  ## @return     [Array] object as Array
+  ##
+  def ensure_array
+    return self
+  end
 end

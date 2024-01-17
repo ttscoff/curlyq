@@ -93,4 +93,13 @@ class ::String
       default.is_a?(Symbol) ? default.to_sym : default.normalize_browser_type
     end
   end
+
+  ##
+  ## Ensure that an object is an array
+  ##
+  ## @return     [Array] object as Array
+  ##
+  def ensure_array
+    return [self]
+  end
 end

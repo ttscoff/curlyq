@@ -387,4 +387,13 @@ class ::Hash
   def stringify_keys!
     replace stringify_keys
   end
+
+  ##
+  ## Ensure that an object is an array
+  ##
+  ## @return     [Array] object as Array
+  ##
+  def ensure_array
+    return [self]
+  end
 end

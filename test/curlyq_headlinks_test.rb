@@ -17,8 +17,9 @@ class CurlyQHeadlinksTest < Test::Unit::TestCase
     result = curlyq('headlinks', '-q', '[rel=stylesheet]', 'https://brettterpstra.com')
     json = JSON.parse(result)
 
-    assert_match(/stylesheet/, json['rel'], 'Should have retrieved a single result with rel stylesheet')
-    assert_match(/screen\.\d+\.css$/, json['href'], 'Stylesheet should be correct primary stylesheet')
+    assert_equal(Array, json.class, 'Result should be an array')
+    assert_match(/stylesheet/, json[0]['rel'], 'Should have retrieved a single result with rel stylesheet')
+    assert_match(/screen\.\d+\.css$/, json[0]['href'], 'Stylesheet should be correct primary stylesheet')
   end
 
   def test_headlinks
