@@ -171,6 +171,19 @@ class ::Array
   end
 
   ##
+  ## Clean up output, shrink single-item arrays, ensure array output
+  ##
+  ## @return [Array] cleaned up array
+  ##
+  def clean_output
+    output = dup
+    while output.is_a?(Array) && output.count == 1
+      output = output[0]
+    end
+    output.ensure_array
+  end
+
+  ##
   ## Ensure that an object is an array
   ##
   ## @return     [Array] object as Array

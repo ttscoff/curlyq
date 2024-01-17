@@ -49,7 +49,7 @@ end
 def self.print_out(output, yaml, raw: false, pretty: true)
   output = output.to_data if output.respond_to?(:to_data)
   # Was intended to flatten single responses, but not getting an array back is unpredictable
-  # output = output[0] if output&.is_a?(Array) && output.count == 1
+  output = output.clean_output
   if output.is_a?(String)
     print output
   elsif raw
@@ -144,14 +144,9 @@ command %i[html curl] do |c|
     end
     output.delete_if(&:nil?)
     output.delete_if(&:empty?)
-    # output = output[0] if output.count == 1
     output.map! { |o| o[options[:raw].to_sym] } if options[:raw]
 
-    if output.is_a?(Array)
-      while output.length == 1
-        output = output[0]
-      end
-    end
+    output = output.clean_output
 
     print_out(output, global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
   end
@@ -246,7 +241,7 @@ command :json do |c|
       end
     end
 
-    # output = output[0] if output.count == 1
+    output = output.clean_output
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
   end
@@ -356,10 +351,7 @@ command :tags do |c|
       end
     end
 
-    while output.is_a?(Array) && output.count == 1
-      output = output[0]
-    end
-    output = output.ensure_array
+    output = output.clean_output
 
     if options[:source]
       puts output.to_html
@@ -483,10 +475,7 @@ command :headlinks do |c|
       end
     end
 
-    while output.is_a?(Array) && output.count == 1
-      output = output[0]
-    end
-    output = output.ensure_array
+    output = output.clean_output
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
   end
@@ -537,10 +526,7 @@ command :scrape do |c|
 
     output.delete_if(&:empty?)
 
-    while output.is_a?(Array) && output.count == 1
-      output = output[0]
-    end
-    output = output.ensure_array
+    output = output.clean_output
 
     if options[:raw]
       output.map! { |o| o[options[:raw].to_sym] }

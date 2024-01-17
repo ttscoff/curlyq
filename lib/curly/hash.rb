@@ -81,7 +81,6 @@ class ::Hash
       "[#{inter}]"
     end
 
-    enumerate = false
     out = []
     q = path.split(/(?<![\d.])\./)
 
@@ -386,6 +385,17 @@ class ::Hash
   ##
   def stringify_keys!
     replace stringify_keys
+  end
+
+  ##
+  ## Clean up empty arrays and return an array with one or
+  ## more elements
+  ##
+  ## @return     [Array] output array
+  ##
+  def clean_output
+    output = ensure_array
+    output.clean_output
   end
 
   ##

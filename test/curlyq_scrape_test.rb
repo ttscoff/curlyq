@@ -14,13 +14,13 @@ class CurlyQScrapeTest < Test::Unit::TestCase
     @screenshot = File.join(File.dirname(__FILE__), 'screenshot_test')
     FileUtils.rm_f("#{@screenshot}.pdf") if File.exist?("#{@screenshot}.pdf")
     FileUtils.rm_f('screenshot_test.png') if File.exist?("#{@screenshot}.png")
-    FileUtils.rm_f("#{@screenshot}.pdf_full.png") if File.exist?("#{@screenshot}.pdf_full.png")
+    FileUtils.rm_f("#{@screenshot}_full.png") if File.exist?("#{@screenshot}_full.png")
   end
 
   def teardown
     FileUtils.rm_f("#{@screenshot}.pdf") if File.exist?("#{@screenshot}.pdf")
     FileUtils.rm_f('screenshot_test.png') if File.exist?("#{@screenshot}.png")
-    FileUtils.rm_f("#{@screenshot}.pdf_full.png") if File.exist?("#{@screenshot}.pdf_full.png")
+    FileUtils.rm_f("#{@screenshot}_full.png") if File.exist?("#{@screenshot}_full.png")
   end
 
   def test_scrape_firefox

@@ -95,6 +95,16 @@ class ::String
   end
 
   ##
+  ## Clean up output and return a single-item array
+  ##
+  ## @return     [Array] output array
+  ##
+  def clean_output
+    output = ensure_array
+    output.clean_output
+  end
+
+  ##
   ## Ensure that an object is an array
   ##
   ## @return     [Array] object as Array
