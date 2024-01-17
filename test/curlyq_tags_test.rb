@@ -14,18 +14,23 @@ class CurlyQTagsTest < Test::Unit::TestCase
   end
 
   def test_tags
-    result = curlyq('tags', '--search', '#main .post h3', '-q', 'attrs[id*=what]', 'https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/')
+    result = curlyq('tags', '--search', '#main .post h3', 'https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/')
     json = JSON.parse(result)
 
-    assert_equal(json.count, 1, 'Should have 1 result')
-    assert_match(/whats-next/, json[0]['attrs']['id'], 'Should have matched #whats-next')
+    assert_equal(Array, json.class, 'Should be an array of matches')
+    assert_equal(6, json.count, 'Should be six results')
   end
 
   def test_clean
     result = curlyq('tags', '--search', '#main section.related', '--clean', 'https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/')
     json = JSON.parse(result)
 
-    assert_equal(json.count, 1, 'Should have 1 result')
-    assert_match(%r{Last.fm</h5></a></li>}, json[0]['source'], 'Should have matched #whats-next')
+    assert_equal(Hash, json.class, 'Should be a single hash')
+    assert_match(%r{Last.fm</h5></a></li>}, json['source'], 'Should have matched #whats-next')
+  end
+
+  def test_query
+    result = curlyq('tags', '--search', '#main .post h3', '-q', '[attrs.id*=what].source', 'https://brettterpstra.com/2024/01/10/introducing-curlyq-a-pipeline-oriented-curl-helper/')
+    assert_match(%r{^<h3 id="whats-next">What’s Next</h3>$}, result, 'Should have returned just source')
   end
 end

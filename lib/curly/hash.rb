@@ -2,6 +2,14 @@
 
 # Hash helpers
 class ::Hash
+  ## Convert a Curly object to data hash
+  ##
+  ## @return     [Hash] return a hash with keys renamed and
+  ##             cleaned up
+  ##
+  ## @param      url    [String] A url to fall back to
+  ## @param      clean  [Boolean] Clean extra spaces and newlines in sources
+  ##
   def to_data(url: nil, clean: false)
     if key?(:body_links)
       {
@@ -23,22 +31,32 @@ class ::Hash
     end
   end
 
+  ##
+  ## Return the raw HTML of the object
+  ##
+  ## @return    [String] Html representation of the object.
+  ##
   def to_html
     if key?(:source)
       self[:source]
     end
   end
 
+  ##
+  ## Get a value from the hash using a dot-syntax query
+  ##
+  ## @param      query  [String] The query (dot notation)
+  ##
+  ## @return     [Object] result of querying the hash
+  ##
   def get_value(query)
     return nil if self.empty?
     stringify_keys!
 
     query.split('.').inject(self) do |v, k|
-      if v.is_a? Array
-        return v.map { |el| el.get_value(k) }
-      end
+      return v.map { |el| el.get_value(k) } if v.is_a? Array
       # k = k.to_i if v.is_a? Array
-      next unless v.key?(k)
+      next v unless v.key?(k)
 
       v.fetch(k)
     end
@@ -48,7 +66,7 @@ class ::Hash
   #
   # @param      path  [String] The path
   #
-  # @return     Result of path query
+  # @return     [Object] Result of path query
   #
   def dot_query(path, root = nil, full_tag: true)
     res = stringify_keys
@@ -152,6 +170,14 @@ class ::Hash
     out
   end
 
+  ##
+  ## Test if values in an array match an operator
+  ##
+  ## @param      array [Array] The array
+  ## @param      key   [String] The key
+  ## @param      comp  [String] The comparison, e.g. *= or $=
+  ##
+  ## @return [Boolean] true if array contains match
   def array_match(array, key, comp)
     keep = false
     array.each do |el|
@@ -353,6 +379,11 @@ class ::Hash
     end
   end
 
+  ##
+  ## Destructive version of #stringify_keys
+  ##
+  ## @see        #stringify_keys
+  ##
   def stringify_keys!
     replace stringify_keys
   end

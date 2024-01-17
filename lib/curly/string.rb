@@ -6,6 +6,11 @@
 ## @return     [String] cleaned string
 ##
 class ::String
+  ## Remove extra spaces and newlines, compress space
+  ## between tags
+  ##
+  ## @return     [String] cleaned string
+  ##
   def clean
     gsub(/[\t\n ]+/m, ' ').gsub(/> +</, '><')
   end
@@ -40,7 +45,7 @@ class ::String
   ##
   ## Convert an image type string to a symbol
   ##
-  ## @return     Symbol :srcset, :img, :opengraph, :all
+  ## @return     [Symbol] :srcset, :img, :opengraph, :all
   ##
   def normalize_image_type(default = :all)
     case self.to_s
@@ -58,7 +63,7 @@ class ::String
   ##
   ## Convert a browser type string to a symbol
   ##
-  ## @return     Symbol :chrome, :firefox
+  ## @return     [Symbol] :chrome, :firefox
   ##
   def normalize_browser_type(default = :none)
     case self.to_s
@@ -74,7 +79,7 @@ class ::String
   ##
   ## Convert a screenshot type string to a symbol
   ##
-  ## @return     Symbol :full_page, :print_page, :visible
+  ## @return     [Symbol] :full_page, :print_page, :visible
   ##
   def normalize_screenshot_type(default = :none)
     case self.to_s

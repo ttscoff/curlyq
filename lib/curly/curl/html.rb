@@ -16,6 +16,12 @@ module Curl
     attr_reader :url, :code, :meta, :links, :head, :body,
                 :title, :description, :body_links, :body_images
 
+    # Convert self to a hash of data
+    #
+    # @param      url   [String]  A base url to fall back to
+    #
+    # @return     [Hash] a hash of data
+    #
     def to_data(url: nil)
       {
         url: @url || url,
@@ -68,12 +74,23 @@ module Curl
       @url = url.nil? ? options[:url] : url
     end
 
+    ##
+    # Parse raw HTML source instead of curling
+    #
+    # @param      source  [String] The source
+    #
+    #
+    # @return     [Hash] Hash of data after processing #
+    #
     def parse(source)
       @body = source
       { url: @url, code: @code, headers: @headers, meta: @meta, links: @links, head: @head, body: source,
         source: source.strip, body_links: content_links, body_images: content_images }
     end
 
+    ##
+    ## Curl a url, either with curl or Selenium based on browser settings
+    ##
     def curl
       res = if @url && @browser && @browser != :none
               source = curl_dynamic_html
@@ -283,6 +300,11 @@ module Curl
       output
     end
 
+    ##
+    ## String representation
+    ##
+    ## @return     String representation of the object.
+    ##
     def to_s
       headers = @headers.nil? ? 0 : @headers.count
       meta = @meta.nil? ? 0 : @meta.count

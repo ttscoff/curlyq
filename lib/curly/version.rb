@@ -1,3 +1,5 @@
+# Top level module for CurlyQ
 module Curly
-  VERSION = '0.0.9'
+  # Current version number
+  VERSION = '0.0.10'
 end

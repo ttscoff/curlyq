@@ -66,7 +66,7 @@ class ::Array
     replace dedup_links
   end
 
-  #---------------------------------------------------------
+  ##
   ## Run a query on array elements
   ##
   ## @param      path [String] dot.syntax path to compare
@@ -80,16 +80,29 @@ class ::Array
     res
   end
 
+  ##
+  ## Gets the value of every item in the array
+  ##
+  ## @param      path  The query path (dot syntax)
+  ##
+  ## @return     [Array] array of values
+  ##
   def get_value(path)
     map { |el| el.get_value(path) }
   end
 
+  ##
+  ## Convert every item in the array to HTML
+  ##
+  ## @return     [String] Html representation of the object.
+  ##
   def to_html
     map(&:to_html)
   end
 
   ##
-  ## Test if a tag contains an attribute matching filter queries
+  ## Test if a tag contains an attribute matching filter
+  ## queries
   ##
   ## @param      tag_name    [String] The tag name
   ## @param      classes     [String] The classes to match
@@ -100,6 +113,8 @@ class ::Array
   ##                         $= ^=
   ## @param      value       [String] The value to match
   ## @param      descendant  [Boolean] Check descendant tags
+  ##
+  ## @return     [Boolean] tag matches
   ##
   def tag_match(tag_name, classes, id, attribute, operator, value, descendant: false)
     tag = self
