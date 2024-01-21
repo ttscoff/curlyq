@@ -103,6 +103,9 @@ command %i[html curl] do |c|
   c.desc 'Only gather external links'
   c.switch %i[x external_links_only], default_value: false, negatable: false
 
+  c.desc 'Only gather internal (same-site) links'
+  c.switch %i[l local_links_only], default_value: false, negatable: false
+
   c.action do |global_options, options, args|
     urls = args.join(' ').split(/[, ]+/)
     headers = break_headers(options[:header])
@@ -115,7 +118,8 @@ command %i[html curl] do |c|
                         compressed: options[:compressed], clean: options[:clean],
                         ignore_local_links: options[:ignore_relative],
                         ignore_fragment_links: options[:ignore_fragments],
-                        external_links_only: options[:external_links_only] }
+                        external_links_only: options[:external_links_only],
+                        local_links_only: options[:local_links_only] }
       res = Curl::Html.new(url, curl_settings)
       res.curl
 
@@ -417,6 +421,9 @@ command :links do |c|
   c.desc 'Only gather external links'
   c.switch %i[x external_links_only], default_value: false, negatable: false
 
+  c.desc 'Only gather internal (same-site) links'
+  c.switch %i[l local_links_only], default_value: false, negatable: false
+
   c.desc 'Filter output using dot-syntax path'
   c.flag %i[q query filter]
 
@@ -433,7 +440,8 @@ command :links do |c|
                              compressed: options[:compressed], clean: options[:clean],
                              ignore_local_links: options[:ignore_relative],
                              ignore_fragment_links: options[:ignore_fragments],
-                             external_links_only: options[:external_links_only]
+                             external_links_only: options[:external_links_only],
+                             local_links_only: options[:local_links_only]
                            })
       res.curl
 

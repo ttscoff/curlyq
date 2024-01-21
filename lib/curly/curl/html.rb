@@ -11,7 +11,7 @@ module Curl
   # Class for CURLing an HTML page
   class Html
     attr_accessor :settings, :browser, :source, :headers, :headers_only, :compressed, :clean, :fallback,
-                  :ignore_local_links, :ignore_fragment_links, :external_links_only
+                  :ignore_local_links, :ignore_fragment_links, :external_links_only, :local_links_only
 
     attr_reader :url, :code, :meta, :links, :head, :body,
                 :title, :description, :body_links, :body_images
@@ -69,6 +69,7 @@ module Curl
       @ignore_local_links = options[:ignore_local_links]
       @ignore_fragment_links = options[:ignore_fragment_links]
       @external_links_only = options[:external_links_only]
+      @local_links_only = options[:local_links_only]
 
       @curl = TTY::Which.which('curl')
       @url = url.nil? ? options[:url] : url
@@ -490,11 +491,19 @@ module Curl
 
         link_href = link_href[2]
 
-        next if link_href =~ /^#/ && (@ignore_fragment_links || @external_links_only)
+        if @local_links_only
+          next if @ignore_fragment_links && link_href =~ /^#/
 
-        next if link_href !~ %r{^(\w+:)?//} && (@ignore_local_links || @external_links_only)
+          next unless same_origin?(link_href)
 
-        next if same_origin?(link_href) && @external_links_only
+        else
+          next if link_href =~ /^#/ && (@ignore_fragment_links || @external_links_only)
+
+          next if link_href !~ %r{^(\w+:)?//} && (@ignore_local_links || @external_links_only)
+
+          next if same_origin?(link_href) && @external_links_only
+
+        end
 
         link_title = tag.match(/title=(['"])(.*?)\1/)
         link_title = link_title.nil? ? nil : link_title[2]
@@ -522,11 +531,19 @@ module Curl
       link_tags.each do |m|
         href = m['tag'].match(/href=(["'])(.*?)\1/)
         href = href[2] unless href.nil?
-        next if href =~ /^#/ && (@ignore_fragment_links || @external_links_only)
+        if @local_links_only
+          next if href =~ /^#/ && @ignore_fragment_links
 
-        next if href !~ %r{^(\w+:)?//} && (@ignore_local_links || @external_links_only)
+          next unless same_origin?(href)
 
-        next if same_origin?(href) && @external_links_only
+        else
+          next if href =~ /^#/ && (@ignore_fragment_links || @external_links_only)
+
+          next if href !~ %r{^(\w+:)?//} && (@ignore_local_links || @external_links_only)
+
+          next if same_origin?(href) && @external_links_only
+
+        end
 
         title = m['tag'].match(/title=(["'])(.*?)\1/)
         title = title[2] unless title.nil?
