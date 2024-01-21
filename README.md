@@ -13,7 +13,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [jq]: https://github.com/jqlang/jq "Command-line JSON processor"
 [yq]: https://github.com/mikefarah/yq "yq is a portable command-line YAML, JSON, XML, CSV, TOML and properties processor"
 
-The current version of `curlyq` is 0.0.10
+The current version of `curlyq` is 0.0.11
 .
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like [jq] to parse the output.
@@ -239,6 +239,7 @@ COMMAND OPTIONS
     -h, --header=arg          - Define a header to send as "key=value" (may be used more than once, default: none)
     --[no-]ignore_fragments   - Ignore fragment hrefs when gathering content links
     --[no-]ignore_relative    - Ignore relative hrefs when gathering content links
+    -l, --local_links_only    - Only gather internal (same-site) links
     -q, --query, --filter=arg - Filter output using dot-syntax path (default: none)
     -r, --raw=arg             - Output a raw value for a key (default: none)
     -s, --search=arg          - Regurn an array of matches to a CSS or XPath query (default: none)
@@ -381,6 +382,7 @@ COMMAND OPTIONS
     -d, --[no-]dedup          - Filter out duplicate links, preserving only first one
     --[no-]ignore_fragments   - Ignore fragment hrefs when gathering content links
     --[no-]ignore_relative    - Ignore relative hrefs when gathering content links
+    -l, --local_links_only    - Only gather internal (same-site) links
     -q, --query, --filter=arg - Filter output using dot-syntax path (default: none)
     -x, --external_links_only - Only gather external links
 ```

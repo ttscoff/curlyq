@@ -1,3 +1,11 @@
+### 0.0.11
+
+2024-01-21 15:29
+
+#### IMPROVED
+
+- Add option for --local_links_only to html and links command, only returning links with the same origin site
+
 ### 0.0.10
 
 2024-01-17 13:50
