@@ -2,6 +2,11 @@
 
 2024-04-04 13:06
 
+#### NEW
+
+- Add --script option to screenshot command
+- Add `execute` command for executing JavaScript on a page
+
 ### 0.0.11
 
 2024-01-21 15:29
