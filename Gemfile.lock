@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    curlyq (0.0.11)
+    curlyq (0.0.12)
       gli (~> 2.21.0)
       nokogiri (~> 1.16.0)
       selenium-webdriver (~> 4.16.0)
@@ -11,7 +11,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     gli (2.21.1)
-    nokogiri (1.16.0-arm64-darwin)
+    nokogiri (1.16.2-arm64-darwin)
       racc (~> 1.4)
     parallel (1.23.0)
     parallel_tests (3.13.0)

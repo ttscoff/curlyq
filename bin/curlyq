@@ -156,6 +156,61 @@ command %i[html curl] do |c|
   end
 end
 
+desc 'Execute JavaScript on a URL'
+arg_name 'URL', multiple: true
+command :execute do |c|
+  c.desc 'Browser to use (firefox, chrome)'
+  c.flag %i[b browser], type: BrowserType, must_match: /^[fc].*?$/, default_value: 'chrome'
+
+  c.desc 'Define a header to send as key=value'
+  c.flag %i[h header], multiple: true
+
+  c.desc 'Script to execute, use - to read from STDIN'
+  c.flag %i[s script], multiple: true
+
+  c.desc 'Element ID to wait for before executing'
+  c.flag %i[i id]
+
+  c.desc 'Seconds to wait after executing JS'
+  c.flag %i[w wait], default_value: 2
+
+  c.action do |_, options, args|
+    urls = args.join(' ').split(/[, ]+/)
+
+    raise 'Script input required' unless options[:file] || options[:script]
+
+    compiled_script = []
+
+    if options[:script].count.positive?
+      options[:script].each do |scr|
+        scr.strip!
+        if scr == '-'
+          compiled_script << $stdin.read
+        elsif File.exist?(File.expand_path(scr))
+          compiled_script << IO.read(File.expand_path(scr))
+        else
+          compiled_script << scr
+        end
+      end
+    end
+
+    script = compiled_script.count.positive? ? compiled_script.join(';') : nil
+
+    headers = break_headers(options[:header])
+
+    browser = options[:browser]
+
+    browser = browser.is_a?(Symbol) ? browser : browser.normalize_browser_type
+
+    urls.each do |url|
+      c = Curl::Html.new(url)
+      c.headers = headers
+      c.browser = browser
+      $stdout.puts c.execute(script, options[:wait], options[:id])
+    end
+  end
+end
+
 desc 'Save a screenshot of a URL'
 arg_name 'URL', multiple: true
 command :screenshot do |c|
@@ -171,6 +226,15 @@ command :screenshot do |c|
   c.desc 'Define a header to send as key=value'
   c.flag %i[h header], multiple: true
 
+  c.desc 'Script to execute before taking screenshot'
+  c.flag %i[s script], multiple: true
+
+  c.desc 'Element ID to wait for before taking screenshot'
+  c.flag %i[i id]
+
+  c.desc 'Time to wait before taking screenshot'
+  c.flag %i[w wait], default_value: 0, type: Integer
+
   c.action do |_, options, args|
     urls = args.join(' ').split(/[, ]+/)
     headers = break_headers(options[:header])
@@ -181,13 +245,30 @@ command :screenshot do |c|
     type = type.is_a?(Symbol) ? type : type.normalize_screenshot_type
     browser = browser.is_a?(Symbol) ? browser : browser.normalize_browser_type
 
+    compiled_script = []
+
+    if options[:script].count.positive?
+      options[:script].each do |scr|
+        scr.strip!
+        if scr == '-'
+          compiled_script << $stdin.read
+        elsif File.exist?(File.expand_path(scr))
+          compiled_script << IO.read(File.expand_path(scr))
+        else
+          compiled_script << scr
+        end
+      end
+    end
+
+    script = compiled_script.count.positive? ? compiled_script.join(';') : nil
+
     raise 'Full page screen shots only available with Firefox' if type == :full_page && browser != :firefox
 
     urls.each do |url|
       c = Curl::Html.new(url)
       c.headers = headers
       c.browser = browser
-      c.screenshot(options[:out], type: type)
+      c.screenshot(options[:out], type: type, script: script, id: options[:id], wait: options[:wait])
     end
   end
 end

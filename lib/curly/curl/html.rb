@@ -128,10 +128,19 @@ module Curl
     ##                          save (:full_page,
     ##                          :print_page, :visible)
     ##
-    def screenshot(destination = nil, type: :full_page)
-      full_page = type.to_sym == :full_page
-      print_page = type.to_sym == :print_page
-      save_screenshot(destination, type: type)
+    def screenshot(destination = nil, type: :full_page, script: nil, id: nil, wait: 0)
+      # full_page = type.to_sym == :full_page
+      # print_page = type.to_sym == :print_page
+      save_screenshot(destination, type: type, script: script, id: id, wait_seconds: wait)
+    end
+
+    ##
+    ## @brief      Execute JavaScript
+    ##
+    ## @param      script  The script to run
+    ##
+    def execute(script, wait, element_id)
+      run_js(script, wait, element_id)
     end
 
     ##
@@ -145,12 +154,11 @@ module Curl
     def extract(before, after, inclusive: false)
       before = /#{Regexp.escape(before)}/ unless before.is_a?(Regexp)
       after = /#{Regexp.escape(after)}/ unless after.is_a?(Regexp)
-
-      if inclusive
-        rx = /(#{before.source}.*?#{after.source})/m
-      else
-        rx = /(?<=#{before.source})(.*?)(?=#{after.source})/m
-      end
+      rx = if inclusive
+             /(#{before.source}.*?#{after.source})/m
+           else
+             /(?<=#{before.source})(.*?)(?=#{after.source})/m
+           end
       @body.scan(rx).map { |r| @clean ? r[0].clean : r[0] }
     end
 
@@ -605,13 +613,45 @@ module Curl
     end
 
     ##
+    ## Run JavaScript on a URL
+    ##
+    ## @param      script      The JavaScript to execute
+    ## @param      wait        Seconds to wait after executing JS
+    ## @param      element_id  The element identifier
+    ##
+    def run_js(script, wait_seconds = 2, element_id = nil)
+      raise 'No script provided' if script.nil?
+
+      browser = @browser.is_a?(String) ? @browser.normalize_browser_type : @browser
+
+      driver = Selenium::WebDriver.for browser
+
+      driver.manage.timeouts.implicit_wait = 15
+      res = nil
+      begin
+        driver.get @url
+        if element_id
+          wait = Selenium::WebDriver::Wait.new(timeout: 10) # seconds
+          wait.until { driver.find_element(id: element_id) }
+        end
+        res = driver.execute_script(script)
+        sleep wait_seconds.to_i
+      ensure
+        driver.quit
+      end
+
+      $stderr.puts "Executed JS on #{@url}"
+
+      res
+    end
+
+    ##
     ## Save a screenshot of a url
     ##
     ## @param      destination  [String] File path destination
-    ## @param      browser      [Symbol] The browser (:chrome or :firefox)
     ## @param      type         [Symbol] The type of screenshot (:full_page, :print_page, or :visible)
     ##
-    def save_screenshot(destination = nil, type: :full_page)
+    def save_screenshot(destination = nil, type: :full_page, script: nil, wait_seconds: 0, id: nil)
       raise 'No URL provided' if url.nil?
 
       raise 'No file destination provided' if destination.nil?
@@ -620,7 +660,7 @@ module Curl
 
       raise 'Path doesn\'t exist' unless File.directory?(File.dirname(destination))
 
-      browser = browser.normalize_browser_type if browser.is_a?(String)
+      browser = @browser.is_a?(String) ? @browser.normalize_browser_type : @browser
       type = type.normalize_screenshot_type if type.is_a?(String)
       raise 'Can not save full screen with Chrome, use Firefox' if type == :full_page && browser == :chrome
 
@@ -631,10 +671,21 @@ module Curl
                       "#{destination.sub(/\.(pdf|jpe?g|png)$/, '')}.png"
                     end
 
-      driver = Selenium::WebDriver.for @browser
+      driver = Selenium::WebDriver.for browser
       driver.manage.timeouts.implicit_wait = 4
       begin
         driver.get @url
+        if id
+          wait = Selenium::WebDriver::Wait.new(timeout: 10) # seconds
+          wait.until { driver.find_element(id: id) }
+        end
+
+        if script
+          res = driver.execute_script(script)
+        end
+
+        sleep wait_seconds.to_i
+
         case type
         when :print_page
           driver.save_print_page(destination)
