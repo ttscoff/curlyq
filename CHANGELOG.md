@@ -1,3 +1,11 @@
+### 0.0.13
+
+2024-10-25 10:23
+
+#### FIXED
+
+- Fix tests, handle empty results better
+
 ### 0.0.12
 
 2024-04-04 13:06
