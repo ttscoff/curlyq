@@ -180,6 +180,8 @@ class ::Array
     while output.is_a?(Array) && output.count == 1
       output = output[0]
     end
+    return [] unless output
+
     output.ensure_array
   end
 

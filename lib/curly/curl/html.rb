@@ -289,6 +289,7 @@ module Curl
             end
           when /img/
             next unless %i[all img].include?(type)
+
             width = img[:attrs]['width']
             height = img[:attrs]['height']
             alt = img[:attrs]['alt']
@@ -301,7 +302,7 @@ module Curl
               height: height || 'unknown',
               alt: alt,
               title: title,
-              attrs: img[:attrs],
+              attrs: img[:attrs]
             }
           end
         end
@@ -333,7 +334,9 @@ module Curl
     ##
     def h(level = '\d')
       res = []
-      headlines = @body.to_enum(:scan, %r{<h(?<level>#{level})(?<tag> .*?)?>(?<text>.*?)</h#{level}>}i).map { Regexp.last_match }
+      headlines = @body.to_enum(:scan, %r{<h(?<level>#{level})(?<tag> .*?)?>(?<text>.*?)</h#{level}>}i).map do
+        Regexp.last_match
+      end
       headlines.each do |m|
         headline = { level: m['level'] }
         if m['tag'].nil?
@@ -436,7 +439,13 @@ module Curl
           attrs = tag['attrs'].strip.to_enum(:scan, /(?ix)
                                              (?<key>[@a-z0-9-]+)(?:=(?<quot>["'])
                                              (?<value>[^"']+)\k<quot>|[ >])?/i).map { Regexp.last_match }
-          attributes = attrs.each_with_object({}) { |a, hsh| hsh[a['key']] = a['key'] =~ /^(class|rel)$/ ? a['value'].split(/ /) : a['value'] }
+          attributes = attrs.each_with_object({}) do |a, hsh|
+            if a['value'].nil?
+              hsh[a['key']] = nil
+            else
+              hsh[a['key']] = a['key'] =~ /^(class|rel)$/ ? a['value'].split(/ /) : a['value']
+            end
+          end
         end
         {
           tag: tag['tag'],
@@ -640,7 +649,7 @@ module Curl
         driver.quit
       end
 
-      $stderr.puts "Executed JS on #{@url}"
+      warn "Executed JS on #{@url}"
 
       res
     end
@@ -680,9 +689,7 @@ module Curl
           wait.until { driver.find_element(id: id) }
         end
 
-        if script
-          res = driver.execute_script(script)
-        end
+        res = driver.execute_script(script) if script
 
         sleep wait_seconds.to_i
 
@@ -698,7 +705,7 @@ module Curl
         driver.quit
       end
 
-      $stderr.puts "Screenshot saved to #{destination}"
+      warn "Screenshot saved to #{destination}"
     end
 
     ##
@@ -837,13 +844,11 @@ module Curl
     ## @return     [Boolean] true if hostnames match
     ##
     def same_origin?(href)
-      begin
-        uri = URI(href)
-        origin = URI(@url)
-        uri.host == origin.host
-      rescue StandardError
-        false
-      end
+      uri = URI(href)
+      origin = URI(@url)
+      uri.host == origin.host
+    rescue StandardError
+      false
     end
   end
 end
