@@ -1,3 +1,11 @@
+### 0.0.15
+
+2024-10-25 10:31
+
+#### IMPROVED
+
+- Better error when no results, return nothing to STDOUT
+
 ### 0.0.14
 
 2024-10-25 10:26
