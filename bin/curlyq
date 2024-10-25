@@ -149,10 +149,7 @@ command %i[html curl] do |c|
     output.delete_if(&:nil?)
     output.delete_if(&:empty?)
 
-    if output.nil? || output.empty?
-      print_out([], global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
-      Process.exit 1
-    end
+    exit_now!('No results') if output.nil? || output.empty?
 
     output.map! { |o| o[options[:raw].to_sym] } if options[:raw]
 
@@ -492,10 +489,7 @@ command :images do |c|
       end
     end
 
-    if output.nil? || output.empty?
-      print_out([], global_options[:yaml], raw: options[:raw], pretty: global_options[:pretty])
-      Process.exit 1
-    end
+    exit_now!('No results') if output.nil? || output.empty?
 
     print_out(output, global_options[:yaml], pretty: global_options[:pretty])
   end
