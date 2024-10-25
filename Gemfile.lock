@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    curlyq (0.0.13)
+    curlyq (0.0.14)
       gli (~> 2.21.0)
       nokogiri (~> 1.16.0)
       selenium-webdriver (~> 4.16.0)
@@ -10,8 +10,8 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    gli (2.21.1)
-    nokogiri (1.16.2-arm64-darwin)
+    gli (2.21.5)
+    nokogiri (1.16.7-arm64-darwin)
       racc (~> 1.4)
     parallel (1.23.0)
     parallel_tests (3.13.0)
@@ -19,10 +19,10 @@ GEM
     pastel (0.8.0)
       tty-color (~> 0.5)
     power_assert (2.0.3)
-    racc (1.7.3)
+    racc (1.8.1)
     rake (13.1.0)
     rdoc (6.3.3)
-    rexml (3.2.6)
+    rexml (3.3.7)
     rubyzip (2.3.2)
     selenium-webdriver (4.16.0)
       rexml (~> 3.2, >= 3.2.5)
