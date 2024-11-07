@@ -733,6 +733,7 @@ module Curl
         compress = @compressed ? '--compressed' : ''
         @source = `#{@curl} -#{flags} #{compress} #{headers} '#{@url}' 2>/dev/null`.strip.utf8
         agent = 0
+
         while @source.nil? || @source.empty?
           @source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{@url}' 2>/dev/null`.strip.utf8
           break if agent >= agents.count - 1
