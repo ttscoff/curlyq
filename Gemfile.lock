@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    curlyq (0.0.15)
+    curlyq (0.0.16)
       gli (~> 2.21.0)
       nokogiri (~> 1.16.0)
       selenium-webdriver (~> 4.16.0)
@@ -13,16 +13,16 @@ GEM
     gli (2.21.5)
     nokogiri (1.16.7-arm64-darwin)
       racc (~> 1.4)
-    parallel (1.23.0)
+    parallel (1.26.3)
     parallel_tests (3.13.0)
       parallel
     pastel (0.8.0)
       tty-color (~> 0.5)
-    power_assert (2.0.3)
+    power_assert (2.0.4)
     racc (1.8.1)
-    rake (13.1.0)
-    rdoc (6.3.3)
-    rexml (3.3.7)
+    rake (13.2.1)
+    rdoc (6.3.4.1)
+    rexml (3.3.9)
     rubyzip (2.3.2)
     selenium-webdriver (4.16.0)
       rexml (~> 3.2, >= 3.2.5)
@@ -42,9 +42,9 @@ GEM
     tty-spinner (0.9.3)
       tty-cursor (~> 0.7)
     tty-which (0.5.0)
-    unicode-display_width (2.5.0)
-    websocket (1.2.10)
-    yard (0.9.34)
+    unicode-display_width (2.6.0)
+    websocket (1.2.11)
+    yard (0.9.37)
 
 PLATFORMS
   arm64-darwin-20
