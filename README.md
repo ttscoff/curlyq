@@ -13,7 +13,7 @@ _If you find this useful, feel free to [buy me some coffee][donate]._
 [jq]: https://github.com/jqlang/jq "Command-line JSON processor"
 [yq]: https://github.com/mikefarah/yq "yq is a portable command-line YAML, JSON, XML, CSV, TOML and properties processor"
 
-The current version of `curlyq` is 0.0.15.
+The current version of `curlyq` is 0.0.16.
 
 CurlyQ is a utility that provides a simple interface for curl, with additional features for things like extracting images and links, finding elements by CSS selector or XPath, getting detailed header info, and more. It's designed to be part of a scripting pipeline, outputting everything as structured data (JSON or YAML). It also has rudimentary support for making calls to JSON endpoints easier, but it's expected that you'll use something like [jq] to parse the output.
 
@@ -46,7 +46,7 @@ SYNOPSIS
     curlyq [global options] command [command options] [arguments...]
 
 VERSION
-    0.0.15
+    0.0.16
 
 GLOBAL OPTIONS
     --help          - Show this message
