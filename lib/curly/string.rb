@@ -6,6 +6,24 @@
 ## @return     [String] cleaned string
 ##
 class ::String
+   ##
+  ## Discard invalid characters and output a UTF-8 String
+  ##
+  ## @return     [String] UTF-8 encoded string
+  ##
+  def utf8
+    encode('utf-16', invalid: :replace).encode('utf-8')
+  end
+
+  ##
+  ## Destructive version of #utf8
+  ##
+  ## @return     [String] UTF-8 encoded string, in place
+  ##
+  def utf8!
+    replace utf8
+  end
+
   ## Remove extra spaces and newlines, compress space
   ## between tags
   ##

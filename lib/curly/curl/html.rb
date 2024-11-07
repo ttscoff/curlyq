@@ -731,10 +731,10 @@ module Curl
         ]
         headers = @headers.nil? ? '' : @headers.map { |h, v| %(-H "#{h}: #{v}") }.join(' ')
         compress = @compressed ? '--compressed' : ''
-        @source = `#{@curl} -#{flags} #{compress} #{headers} '#{@url}' 2>/dev/null`
+        @source = `#{@curl} -#{flags} #{compress} #{headers} '#{@url}' 2>/dev/null`.strip.utf8
         agent = 0
         while @source.nil? || @source.empty?
-          @source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{@url}' 2>/dev/null`
+          @source = `#{@curl} -#{flags} #{compress} -A "#{agents[agent]}" #{headers} '#{@url}' 2>/dev/null`.strip.utf8
           break if agent >= agents.count - 1
         end
 
